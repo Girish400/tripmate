@@ -1,0 +1,130 @@
+pipeline {
+  agent any
+    agent any
+
+  environment {
+    VITE_FIREBASE_API_KEY         = credentials('firebase-api-key')
+    VITE_FIREBASE_AUTH_DOMAIN     = credentials('firebase-auth-domain')
+    VITE_FIREBASE_PROJECT_ID      = credentials('firebase-project-id')
+    VITE_FIREBASE_STORAGE_BUCKET  = credentials('firebase-storage-bucket')
+    VITE_FIREBASE_MSG_SENDER_ID   = credentials('firebase-msg-sender-id')
+    VITE_FIREBASE_APP_ID          = credentials('firebase-app-id')
+    VITE_FIREBASE_MEASUREMENT_ID  = credentials('firebase-measurement-id')
+    GH_TOKEN                      = credentials('github-pages-token')
+  }
+    tools {
+        nodejs "nodejs-18"
+    }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    environment {
+        VITE_FIREBASE_API_KEY         = credentials('firebase-api-key')
+        VITE_FIREBASE_AUTH_DOMAIN     = credentials('firebase-auth-domain')
+        VITE_FIREBASE_PROJECT_ID      = credentials('firebase-project-id')
+        VITE_FIREBASE_STORAGE_BUCKET  = credentials('firebase-storage-bucket')
+        VITE_FIREBASE_MSG_SENDER_ID   = credentials('firebase-msg-sender-id')
+        VITE_FIREBASE_APP_ID          = credentials('firebase-app-id')
+        VITE_FIREBASE_MEASUREMENT_ID  = credentials('firebase-measurement-id')
+        GH_TOKEN                      = credentials('github-pages-token')
+    }
+    stage('Install') {
+      steps { sh 'npm ci' }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Lint Check') {
+            steps {
+                sh 'npm run lint'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                // This runs Vitest unit tests. Pipeline fails if any test fails.
+                sh 'npm run test:unit'
+            }
+        }
+
+        stage('Integration Tests') {
+            steps {
+                // This runs Vitest integration tests (auth flow, trip creation).
+                sh 'npm run test:integration'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Deploy to GH Pages') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh 'npm run deploy'
+            }
+        }
+    }
+    stage('Lint') {
+      steps { sh 'npm run lint' }
+
+    post {
+        failure {
+            echo 'Pipeline failed! Check the test logs for details.'
+        }
+    }
+    stage('Unit Tests') {
+      steps { sh 'npm run test:unit' }
+    }
+    stage('Integration Tests') {
+      steps { sh 'npm run test:integration' }
+    }
+    stage('Build') {
+      steps {
+        sh '''
+          cat > .env << EOF
+VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY}
+VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}
+VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID}
+VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET}
+VITE_FIREBASE_MSG_SENDER_ID=${VITE_FIREBASE_MSG_SENDER_ID}
+VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}
+VITE_FIREBASE_MEASUREMENT_ID=${VITE_FIREBASE_MEASUREMENT_ID}
+EOF
+          npm run build
+        '''
+      }
+    }
+    stage('Deploy') {
+      steps {
+        sh '''
+          git config user.email "ci@tripmate.app"
+          git config user.name "Jenkins CI"
+          git remote set-url origin https://${GH_TOKEN}@github.com/<your-username>/tripmate.git
+          npm run deploy
+        '''
+      }
+    }
+  }
+
+  post {
+    failure { echo 'Pipeline failed — deploy skipped.' }
+    success { echo 'Deployed to GitHub Pages successfully.' }
+    always  { sh 'rm -f .env' }
+  }
+}

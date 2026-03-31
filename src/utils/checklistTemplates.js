@@ -119,11 +119,7 @@ const RV_CAMPING = [
       'Bug Spray / Hand Sanitizer', 'Sunscreen / Sunglasses / Hats',
     ],
   },
-  ...TENT_CAMPING.filter(c => c.category !== 'Campfire').map(c =>
-    c.category === 'Sleeping'
-      ? { ...c, items: c.items.filter(i => i !== 'Tent / Tarp / Pop-up Tent') }
-      : c
-  ),
+  ...TENT_CAMPING.filter(c => c.category !== 'Campfire'),
 ]
 
 const BEACH_GLAMPING = [
@@ -329,7 +325,7 @@ const INTERNATIONAL = [
 export const TEMPLATES = {
   'Tent Camping':           TENT_CAMPING,
   'RV':                     RV_CAMPING,
-  'Glamping':               BEACH_GLAMPING,
+  'Glamping':               BEACH_GLAMPING,  // similar enough for MVP; can be split later
   'Beach':                  BEACH_GLAMPING,
   'Ski/Snow':               SKI,
   'Road Trip':              ROAD_TRIP,
