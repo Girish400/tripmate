@@ -29,6 +29,7 @@ vi.mock('firebase/firestore', () => ({
   addDoc: vi.fn(() => Promise.resolve({ id: 'mock-id' })),
   updateDoc: vi.fn(() => Promise.resolve()),
   arrayUnion: vi.fn((...args) => args),
+  arrayRemove: vi.fn((...args) => args),
   serverTimestamp: vi.fn(() => new Date('2026-03-30')),
   Timestamp: { fromDate: vi.fn(d => d) },
   onSnapshot: vi.fn(() => vi.fn()),   // returns unsubscribe fn
@@ -39,4 +40,5 @@ vi.mock('firebase/firestore', () => ({
     commit: vi.fn(() => Promise.resolve()),
   })),
   deleteField: vi.fn(() => '__DELETE__'),
+  deleteDoc: vi.fn(() => Promise.resolve()),
 }))
