@@ -5,6 +5,7 @@ import LoginPage from '../../src/pages/LoginPage'
 
 vi.mock('../../src/utils/auth', () => ({
   upsertUser: vi.fn(() => Promise.resolve()),
+  isSafari: vi.fn(() => false),
 }))
 
 describe('LoginPage', () => {
@@ -15,7 +16,7 @@ describe('LoginPage', () => {
     expect(screen.getByText(/Gmail accounts only/)).toBeTruthy()
   })
 
-  it('calls signInWithPopup when Login with Gmail is clicked', async () => {
+  it('calls signInWithPopup when Login with Gmail is clicked (non-Safari)', async () => {
     vi.mocked(signInWithPopup).mockResolvedValue({ user: { uid: 'u1' } })
     render(<LoginPage />)
     fireEvent.click(screen.getByText('Login with Gmail'))

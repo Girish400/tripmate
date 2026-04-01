@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, getRedirectResult } from 'firebase/auth'
 import { auth, persistenceReady } from './firebase'
+import { upsertUser } from './utils/auth'
 import { getUserTrips, getTripStatus } from './utils/trips'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
@@ -38,11 +39,20 @@ export default function App() {
 
   useEffect(() => {
     let unsub
-    persistenceReady.then(() => {
+    async function init() {
+      await persistenceReady
+      // Complete any pending redirect sign-in BEFORE subscribing to auth state.
+      // On iOS Safari, getRedirectResult must resolve first so the auth state
+      // is populated when onAuthStateChanged fires — otherwise it fires null.
+      try {
+        const result = await getRedirectResult(auth)
+        if (result?.user) await upsertUser(result.user)
+      } catch (_) { /* no redirect in progress */ }
       unsub = onAuthStateChanged(auth, user => {
         setAuthState({ loading: false, user })
       })
-    })
+    }
+    init()
     return () => unsub?.()
   }, [])
 
