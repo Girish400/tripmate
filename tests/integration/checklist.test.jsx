@@ -103,7 +103,7 @@ describe('ChecklistTab integration', () => {
     const input = screen.getByPlaceholderText('Item name…')
     fireEvent.change(input, { target: { value: 'Hammock' } })
     fireEvent.click(screen.getByText('Add'))
-    expect(checklistUtils.addItem).toHaveBeenCalledWith('Sleeping', 'Hammock')
+    expect(checklistUtils.addItem).toHaveBeenCalledWith('trip1', 'Sleeping', 'Hammock')
   })
 
   it('shows loading state before snapshot fires', () => {

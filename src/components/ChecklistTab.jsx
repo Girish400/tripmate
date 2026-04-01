@@ -60,7 +60,7 @@ export default function ChecklistTab({ trip, user }) {
   }
 
   const handleAddItem = (category, name) => {
-    addItem(category, name)
+    addItem(trip.tripId, category, name)
   }
 
   if (loading) {
