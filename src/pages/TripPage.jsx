@@ -6,12 +6,14 @@ import Navbar from '../components/Navbar'
 import InvitePopup from '../components/InvitePopup'
 import { getTripEmoji } from '../utils/trips'
 import { getTripMembers } from '../utils/firestore'
+import ChecklistTab from '../components/ChecklistTab'
 
 export default function TripPage({ user }) {
   const { tripId }   = useParams()
   const [trip, setTrip]       = useState(null)
   const [members, setMembers] = useState([])
   const [showInvite, setShowInvite] = useState(false)
+  const [activeTab, setActiveTab] = useState('Checklist')
 
   useEffect(() => {
     getDoc(doc(db, 'trips', tripId)).then(snap => {
@@ -56,19 +58,35 @@ export default function TripPage({ user }) {
       </div>
 
       <div style={{ maxWidth:900, margin:'24px auto', padding:'0 16px' }}>
-        {/* Placeholder tabs */}
+        {/* Tabs */}
         <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap' }}>
-          {['Checklist', 'Expenses', 'Meals', 'Itinerary'].map(tab => (
-            <div key={tab} style={{
-              background:'rgba(255,255,255,0.06)',
-              border:'1px solid rgba(255,255,255,0.1)',
-              borderRadius:8, padding:'7px 14px',
-              color:'#7a9ab8', fontSize:12, cursor:'not-allowed',
-            }}>
-              {tab} <span style={{ fontSize:9, opacity:0.6 }}>(coming soon)</span>
-            </div>
-          ))}
+          {['Checklist', 'Expenses', 'Meals', 'Itinerary'].map(tab => {
+            const isActive    = activeTab === tab
+            const isAvailable = tab === 'Checklist'
+            return (
+              <div
+                key={tab}
+                onClick={() => isAvailable && setActiveTab(tab)}
+                style={{
+                  background: isActive ? 'rgba(66,133,244,0.2)' : 'rgba(255,255,255,0.06)',
+                  border: isActive ? '1px solid rgba(66,133,244,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                  borderRadius:8, padding:'7px 14px',
+                  color: isActive ? '#7eb8f7' : '#7a9ab8',
+                  fontSize:12,
+                  cursor: isAvailable ? 'pointer' : 'not-allowed',
+                  fontWeight: isActive ? 600 : 400,
+                }}
+              >
+                {tab}{!isAvailable && <span style={{ fontSize:9, opacity:0.6, marginLeft:4 }}>(soon)</span>}
+              </div>
+            )
+          })}
         </div>
+
+        {/* Tab content */}
+        {activeTab === 'Checklist' && (
+          <ChecklistTab trip={trip} user={user} />
+        )}
 
         {/* Member list */}
         <div style={{ color:'#fff', fontWeight:600, fontSize:14, marginBottom:12 }}>Members</div>
