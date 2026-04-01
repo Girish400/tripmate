@@ -5,7 +5,6 @@ vi.mock('../src/firebase', () => ({
   auth: {},
   db: {},
   googleProvider: {},
-  persistenceReady: Promise.resolve(),
 }))
 
 vi.mock('firebase/auth', () => ({
@@ -16,8 +15,6 @@ vi.mock('firebase/auth', () => ({
   getRedirectResult: vi.fn(() => Promise.resolve(null)),
   signOut: vi.fn(() => Promise.resolve()),
   onAuthStateChanged: vi.fn(),
-  browserLocalPersistence: 'LOCAL',
-  setPersistence: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock('firebase/firestore', () => ({

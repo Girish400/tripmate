@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { signInWithPopup, signInWithRedirect } from 'firebase/auth'
-import { auth, googleProvider, persistenceReady } from '../firebase'
-import { upsertUser, isSafari } from '../utils/auth'
+import { signInWithPopup } from 'firebase/auth'
+import { auth, googleProvider } from '../firebase'
+import { upsertUser } from '../utils/auth'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -15,16 +15,8 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      await persistenceReady
-      if (isSafari()) {
-        // On iOS Safari, signInWithPopup triggers the "missing initial state"
-        // error due to storage partitioning. signInWithRedirect avoids this —
-        // the result is handled in App.jsx via getRedirectResult on next load.
-        await signInWithRedirect(auth, googleProvider)
-      } else {
-        const result = await signInWithPopup(auth, googleProvider)
-        await upsertUser(result.user)
-      }
+      const result = await signInWithPopup(auth, googleProvider)
+      await upsertUser(result.user)
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') {
         setError('Login cancelled. Try again when ready.')

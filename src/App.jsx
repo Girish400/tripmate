@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth'
-import { auth, persistenceReady } from './firebase'
+import { auth } from './firebase'
 import { upsertUser } from './utils/auth'
 import { getUserTrips, getTripStatus } from './utils/trips'
 import LoginPage from './pages/LoginPage'
@@ -38,22 +38,18 @@ export default function App() {
   const [authState, setAuthState] = useState({ loading: true, user: null })
 
   useEffect(() => {
-    let unsub
-    async function init() {
-      await persistenceReady
-      // Complete any pending redirect sign-in BEFORE subscribing to auth state.
-      // On iOS Safari, getRedirectResult must resolve first so the auth state
-      // is populated when onAuthStateChanged fires — otherwise it fires null.
-      try {
-        const result = await getRedirectResult(auth)
+    // Handle any pending redirect result before subscribing to auth state,
+    // mirroring the pattern used in Allplanner which works on iOS Safari.
+    getRedirectResult(auth)
+      .then(async result => {
         if (result?.user) await upsertUser(result.user)
-      } catch (_) { /* no redirect in progress */ }
-      unsub = onAuthStateChanged(auth, user => {
-        setAuthState({ loading: false, user })
       })
-    }
-    init()
-    return () => unsub?.()
+      .catch(() => { /* no redirect in progress */ })
+
+    const unsub = onAuthStateChanged(auth, user => {
+      setAuthState({ loading: false, user })
+    })
+    return unsub
   }, [])
 
   if (authState.loading) return <div className="loading-screen" aria-label="Loading" role="status" />

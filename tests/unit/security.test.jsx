@@ -7,7 +7,6 @@ import Navbar from '../../src/components/Navbar'
 
 vi.mock('../../src/utils/auth', () => ({
   upsertUser: vi.fn(() => Promise.resolve()),
-  isSafari: vi.fn(() => false),
 }))
 
 const mockUser = {
@@ -20,7 +19,6 @@ const mockUser = {
 describe('Security', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRedirectResult).mockResolvedValue(null)
   })
 
   // ── XSS / Injection guards ───────────────────────────────────────────────────
@@ -79,27 +77,6 @@ describe('Security', () => {
       </MemoryRouter>
     )
     expect(container.querySelectorAll('script').length).toBe(0)
-  })
-
-  // ── Firebase persistence configuration ──────────────────────────────────────
-
-  it('Firebase SDK mock exports browserLocalPersistence as LOCAL', async () => {
-    const { browserLocalPersistence } = await import('firebase/auth')
-    // The setup.js mock sets this to 'LOCAL' which represents browser local persistence
-    expect(browserLocalPersistence).toBe('LOCAL')
-  })
-
-  it('firebase module calls setPersistence on init', async () => {
-    const { setPersistence } = await import('firebase/auth')
-    // The real firebase.js calls setPersistence(auth, browserLocalPersistence)
-    // In the test environment the mock is set up in setup.js — verify it exists
-    expect(setPersistence).toBeDefined()
-    expect(typeof setPersistence).toBe('function')
-  })
-
-  it('persistenceReady is a Promise (firebase module exports it)', async () => {
-    const mod = await import('../../src/firebase')
-    expect(mod.persistenceReady).toBeInstanceOf(Promise)
   })
 
   // ── Storage safety ───────────────────────────────────────────────────────────

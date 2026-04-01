@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { signInWithPopup } from 'firebase/auth'
 import LoginPage from '../../src/pages/LoginPage'
-import { upsertUser, isSafari } from '../../src/utils/auth'
+import { upsertUser } from '../../src/utils/auth'
 
 vi.mock('../../src/utils/auth', () => ({
   upsertUser: vi.fn(() => Promise.resolve()),
-  isSafari: vi.fn(() => false),
 }))
 
 // Convenience: the button's accessible name is set by aria-label
@@ -15,8 +14,6 @@ const BTN_LABEL = /Sign in with Google Gmail account/i
 describe('LoginPage - Auth Flow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRedirectResult).mockResolvedValue(null)
-    vi.mocked(isSafari).mockReturnValue(false)
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true })
   })
 
@@ -51,15 +48,6 @@ describe('LoginPage - Auth Flow', () => {
     render(<LoginPage />)
     fireEvent.click(screen.getByRole('button', { name: BTN_LABEL }))
     await waitFor(() => expect(upsertUser).toHaveBeenCalledWith(mockUser))
-  })
-
-  it('calls signInWithRedirect instead of signInWithPopup on Safari', async () => {
-    vi.mocked(isSafari).mockReturnValue(true)
-    vi.mocked(signInWithRedirect).mockResolvedValue(undefined)
-    render(<LoginPage />)
-    fireEvent.click(screen.getByRole('button', { name: BTN_LABEL }))
-    await waitFor(() => expect(signInWithRedirect).toHaveBeenCalledOnce())
-    expect(signInWithPopup).not.toHaveBeenCalled()
   })
 
   // ── Error Handling / Negative Cases ─────────────────────────────────────────
