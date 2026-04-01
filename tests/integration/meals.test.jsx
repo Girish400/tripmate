@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { addDoc, updateDoc, deleteDoc, onSnapshot, collection, doc, arrayUnion, arrayRemove, getDocs } from 'firebase/firestore'
 import { subscribeMeals, addMeal, updateMeal, deleteMeal, addIngredient, removeIngredient } from '../../src/utils/meals'
+import { subscribeShoppingItems, toggleShoppingItem } from '../../src/utils/shopping'
 
 const TRIP_ID = 'trip1'
 
@@ -71,5 +72,31 @@ describe('meals utils', () => {
       { ingredients: expect.anything() }
     )
     expect(deleteDoc).toHaveBeenCalled()
+  })
+})
+
+describe('shopping utils', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('subscribeShoppingItems calls onSnapshot on shoppingItems collection', () => {
+    const cb = vi.fn()
+    subscribeShoppingItems(TRIP_ID, cb)
+    expect(onSnapshot).toHaveBeenCalled()
+  })
+
+  it('toggleShoppingItem sets checkedBy and checkedAt when checking', async () => {
+    await toggleShoppingItem(TRIP_ID, 'si1', 'user1', true)
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ checkedBy: 'user1' })
+    )
+  })
+
+  it('toggleShoppingItem clears checkedBy and checkedAt when unchecking', async () => {
+    await toggleShoppingItem(TRIP_ID, 'si1', 'user1', false)
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { checkedBy: null, checkedAt: null }
+    )
   })
 })
