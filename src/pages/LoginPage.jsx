@@ -1,29 +1,11 @@
-import { useState, useEffect } from 'react'
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { useState } from 'react'
+import { signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider, persistenceReady } from '../firebase'
-import { upsertUser, isSafari } from '../utils/auth'
+import { upsertUser } from '../utils/auth'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
-
-  // Handle Safari redirect result on mount — must wait for persistence to be ready
-  // before calling getRedirectResult, otherwise IndexedDB isn't initialised and
-  // Firebase silently returns null, dropping the auth state after the redirect.
-  useEffect(() => {
-    let mounted = true
-    persistenceReady
-      .then(() => getRedirectResult(auth))
-      .then(async result => {
-        if (!mounted) return
-        if (result?.user) await upsertUser(result.user)
-      })
-      .catch((err) => {
-        if (!mounted) return
-        if (err.code !== 'auth/credential-already-in-use') setError('Sign-in failed. Please try again.')
-      })
-    return () => { mounted = false }
-  }, [])
 
   const handleLogin = async () => {
     if (!navigator.onLine) {
@@ -35,12 +17,8 @@ export default function LoginPage() {
     try {
       // Must await persistence setup before any auth operation (Firebase requirement).
       await persistenceReady
-      if (isSafari()) {
-        await signInWithRedirect(auth, googleProvider)
-      } else {
-        const result = await signInWithPopup(auth, googleProvider)
-        await upsertUser(result.user)
-      }
+      const result = await signInWithPopup(auth, googleProvider)
+      await upsertUser(result.user)
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') {
         setError('Login cancelled. Try again when ready.')

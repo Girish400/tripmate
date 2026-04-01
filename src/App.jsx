@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from './firebase'
+import { auth, persistenceReady } from './firebase'
 import { getUserTrips, getTripStatus } from './utils/trips'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
@@ -37,10 +37,13 @@ export default function App() {
   const [authState, setAuthState] = useState({ loading: true, user: null })
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, user => {
-      setAuthState({ loading: false, user })
+    let unsub
+    persistenceReady.then(() => {
+      unsub = onAuthStateChanged(auth, user => {
+        setAuthState({ loading: false, user })
+      })
     })
-    return unsub
+    return () => unsub?.()
   }, [])
 
   if (authState.loading) return <div className="loading-screen" aria-label="Loading" role="status" />
