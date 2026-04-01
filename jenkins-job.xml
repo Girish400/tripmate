@@ -1,0 +1,111 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+  <description>TripMate — lint, unit tests, integration tests, coverage and build</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+    <script>pipeline {
+    agent any
+
+    tools {
+        nodejs 'Node25'
+    }
+
+    environment {
+        PROJECT_DIR = 'C:/Users/Girish/Desktop/tripmate'
+    }
+
+    stages {
+
+        stage('Install') {
+            steps {
+                bat """
+                    cd /d "%PROJECT_DIR%"
+                    node --version
+                    npm --version
+                    npm ci
+                """
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                bat """
+                    cd /d "%PROJECT_DIR%"
+                    npm run lint
+                """
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                bat """
+                    cd /d "%PROJECT_DIR%"
+                    npx vitest run tests/unit --reporter=verbose --reporter=junit --outputFile.junit=reports/unit-results.xml
+                """
+            }
+            post {
+                always {
+                    junit testResults: 'C:/Users/Girish/Desktop/tripmate/reports/unit-results.xml', allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('Integration Tests') {
+            steps {
+                bat """
+                    cd /d "%PROJECT_DIR%"
+                    npx vitest run tests/integration --reporter=verbose --reporter=junit --outputFile.junit=reports/integration-results.xml
+                """
+            }
+            post {
+                always {
+                    junit testResults: 'C:/Users/Girish/Desktop/tripmate/reports/integration-results.xml', allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('Coverage') {
+            steps {
+                bat """
+                    cd /d "%PROJECT_DIR%"
+                    npx vitest run --coverage --reporter=junit --outputFile.junit=reports/coverage-results.xml
+                """
+            }
+            post {
+                always {
+                    junit testResults: 'C:/Users/Girish/Desktop/tripmate/reports/coverage-results.xml', allowEmptyResults: true
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'C:/Users/Girish/Desktop/tripmate/coverage',
+                        reportFiles: 'index.html',
+                        reportName: 'TripMate Coverage Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                bat """
+                    cd /d "%PROJECT_DIR%"
+                    npm run build
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'All stages passed.'
+        }
+        failure {
+            echo 'Pipeline failed — check test reports above.'
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+</flow-definition>

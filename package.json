@@ -13,7 +13,7 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src --ext .js,.jsx"
+    "lint": "eslint src"
   },
   "dependencies": {
     "firebase": "^10.14.1",
@@ -27,7 +27,7 @@
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@vitejs/plugin-react": "^4.3.3",
-    "@vitest/coverage-v8": "^2.1.4",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.13.0",
     "eslint-plugin-react": "^7.37.2",
     "gh-pages": "^6.2.0",
