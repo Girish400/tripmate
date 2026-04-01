@@ -1,0 +1,202 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774905229651,
+  "projectRoot": "C:\\Users\\Girish\\Desktop\\tripmate",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "6.0.1",
+        "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "2.1.4",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview",
+      "predeploy": "npm run build",
+      "deploy": "gh-pages -d dist",
+      "test": "vitest",
+      "test:unit": "vitest run tests/unit",
+      "test:integration": "vitest run tests/integration",
+      "test:coverage": "vitest run --coverage",
+      "lint": "eslint src --ext .js,.jsx"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "src",
+      "tests"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "ci": {
+      "path": "ci",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1774905229618,
+      "keyFiles": [
+        "jenkins-setup.md",
+        "Jenkinsfile"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 2,
+      "lastAccessed": 1774905229619,
+      "keyFiles": [
+        "firebase-setup.md",
+        "github-pages-hosting.md"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1774905229630,
+      "keyFiles": [
+        "App.jsx",
+        "firebase.js",
+        "main.jsx"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 1,
+      "lastAccessed": 1774905229630,
+      "keyFiles": [
+        "setup.js"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 4,
+      "lastAccessed": 1774905229631,
+      "keyFiles": [
+        "InvitePopup.jsx",
+        "Navbar.jsx",
+        "NewTripModal.jsx"
+      ]
+    },
+    "src\\pages": {
+      "path": "src\\pages",
+      "purpose": "Page components",
+      "fileCount": 4,
+      "lastAccessed": 1774905229632,
+      "keyFiles": [
+        "HomePage.jsx",
+        "JoinPage.jsx",
+        "LoginPage.jsx"
+      ]
+    },
+    "src\\utils": {
+      "path": "src\\utils",
+      "purpose": "Utility functions",
+      "fileCount": 3,
+      "lastAccessed": 1774905229632,
+      "keyFiles": [
+        "auth.js",
+        "firestore.js",
+        "trips.js"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "tests\\unit\\TripCard.test.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1774905262225,
+      "type": "file"
+    },
+    {
+      "path": "tests\\integration\\auth.test.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1774905284732,
+      "type": "file"
+    },
+    {
+      "path": "src\\App.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1774905285130,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\TripPage.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1774905296093,
+      "type": "file"
+    },
+    {
+      "path": "tests\\integration\\tripFlow.test.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1774905360181,
+      "type": "file"
+    },
+    {
+      "path": "tests\\setup.js",
+      "accessCount": 1,
+      "lastAccessed": 1774905360193,
+      "type": "file"
+    },
+    {
+      "path": "vite.config.js",
+      "accessCount": 1,
+      "lastAccessed": 1774905591340,
+      "type": "file"
+    },
+    {
+      "path": "src\\utils\\trips.js",
+      "accessCount": 1,
+      "lastAccessed": 1774906267481,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

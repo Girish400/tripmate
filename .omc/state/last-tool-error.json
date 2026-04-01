@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"C:\\\\Users\\\\Girish\\\\Desktop\\\\tripmate\\\" && npm run test:integration -- --run 2>&1\",\"timeout\":60000,\"description\":\"Run integration tests\"}",
+  "error": "Exit code 1\n\n> tripmate@0.1.0 test:integration\n> vitest run tests/integration --run\n\n\n\u001b[1m\u001b[7m\u001b[36m RUN \u001b[39m\u001b[27m\u001b[22m \u001b[36mv2.1.9 \u001b[39m\u001b[90mC:/Users/Girish/Desktop/tripmate\u001b[39m\n\n\u001b[90mstderr\u001b[2m | tests/integration/tripFlow.test.jsx\u001b[2m > \u001b[22m\u001b[2mTrip creation flow\u001b[2m > \u001b[22m\u001b[2mopens NewTripModal on + Create Trip click (empty state)\n\u001b[22m\u001b[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransit...",
+  "timestamp": "2026-03-30T21:14:37.886Z",
+  "retry_count": 2
+}
