@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { addDoc, updateDoc, deleteDoc, onSnapshot, collection, doc } from 'firebase/firestore'
 import { computeBalances } from '../../src/utils/expenses'
+import {
+  subscribeExpenses, addExpense, updateExpense, deleteExpense,
+  subscribeExpenseLabels, addExpenseLabel,
+} from '../../src/utils/expenses'
 
 const famA = { familyId: 'fA', name: 'Sharma family' }
 const famB = { familyId: 'fB', name: 'Johnson family' }
@@ -54,13 +59,6 @@ describe('computeBalances', () => {
   })
 })
 
-import { vi, beforeEach } from 'vitest'
-import { addDoc, updateDoc, deleteDoc, onSnapshot, collection, doc } from 'firebase/firestore'
-import {
-  subscribeExpenses, addExpense, updateExpense, deleteExpense,
-  subscribeExpenseLabels, addExpenseLabel,
-} from '../../src/utils/expenses'
-
 const TRIP_ID = 'trip1'
 
 describe('expenses Firestore utils', () => {
@@ -91,6 +89,7 @@ describe('expenses Firestore utils', () => {
         paidByFamilyName: 'Sharma family',
         label: 'Food',
         createdBy: 'u1',
+        createdAt: expect.anything(),
       })
     )
   })
@@ -119,7 +118,7 @@ describe('expenses Firestore utils', () => {
     await addExpenseLabel(TRIP_ID, 'Food', 'u1')
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ name: 'Food', createdBy: 'u1' })
+      expect.objectContaining({ name: 'Food', createdBy: 'u1', createdAt: expect.anything() })
     )
   })
 })

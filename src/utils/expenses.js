@@ -32,7 +32,7 @@ export function subscribeExpenseLabels(tripId, callback) {
   const ref = collection(db, 'trips', tripId, 'expenseLabels')
   return onSnapshot(ref, snap => {
     const labels = snap.docs.map(d => ({ labelId: d.id, ...d.data() }))
-    labels.sort((a, b) => a.name.localeCompare(b.name))
+    labels.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
     callback(labels)
   })
 }
