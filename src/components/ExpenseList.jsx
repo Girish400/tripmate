@@ -13,7 +13,7 @@ export default function ExpenseList({ expenses, user, currency = 'USD', onEdit, 
   return (
     <div data-testid="expense-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {expenses.map(exp => {
-        const isOwn = exp.createdBy === user.uid
+        const isOwn = exp.createdBy === user?.uid
         return (
           <div
             key={exp.expenseId}
@@ -46,11 +46,13 @@ export default function ExpenseList({ expenses, user, currency = 'USD', onEdit, 
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   data-testid={`edit-btn-${exp.expenseId}`}
+                  aria-label={`Edit ${exp.description}`}
                   onClick={() => onEdit(exp)}
                   style={{ background: 'none', border: 'none', color: '#7a9ab8', cursor: 'pointer', fontSize: 12 }}
                 >✏️</button>
                 <button
                   data-testid={`delete-btn-${exp.expenseId}`}
+                  aria-label={`Delete ${exp.description}`}
                   onClick={() => onDelete(exp.expenseId)}
                   style={{ background: 'none', border: 'none', color: '#7a9ab8', cursor: 'pointer', fontSize: 12 }}
                 >🗑</button>
