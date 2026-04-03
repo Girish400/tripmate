@@ -1,5 +1,5 @@
 export default function BalanceSummary({ balances, currency = 'USD' }) {
-  if (balances.length === 0) return null
+  if (!balances || balances.length === 0) return null
 
   const fmt = (amount) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Math.abs(amount))
