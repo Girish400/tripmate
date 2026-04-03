@@ -53,3 +53,73 @@ describe('computeBalances', () => {
     expect(result.find(r => r.familyId === 'fC').balance).toBeCloseTo(-33.33, 1)
   })
 })
+
+import { vi, beforeEach } from 'vitest'
+import { addDoc, updateDoc, deleteDoc, onSnapshot, collection, doc } from 'firebase/firestore'
+import {
+  subscribeExpenses, addExpense, updateExpense, deleteExpense,
+  subscribeExpenseLabels, addExpenseLabel,
+} from '../../src/utils/expenses'
+
+const TRIP_ID = 'trip1'
+
+describe('expenses Firestore utils', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('subscribeExpenses calls onSnapshot on the expenses collection', () => {
+    const cb = vi.fn()
+    subscribeExpenses(TRIP_ID, cb)
+    expect(onSnapshot).toHaveBeenCalled()
+  })
+
+  it('addExpense calls addDoc with correct fields', async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: 'exp1' })
+    await addExpense(TRIP_ID, {
+      description: 'Groceries',
+      amount: 120,
+      paidByFamilyId: 'fA',
+      paidByFamilyName: 'Sharma family',
+      label: 'Food',
+      createdBy: 'u1',
+    })
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        description: 'Groceries',
+        amount: 120,
+        paidByFamilyId: 'fA',
+        paidByFamilyName: 'Sharma family',
+        label: 'Food',
+        createdBy: 'u1',
+      })
+    )
+  })
+
+  it('updateExpense calls updateDoc', async () => {
+    await updateExpense(TRIP_ID, 'exp1', { description: 'Updated' })
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { description: 'Updated' }
+    )
+  })
+
+  it('deleteExpense calls deleteDoc', async () => {
+    await deleteExpense(TRIP_ID, 'exp1')
+    expect(deleteDoc).toHaveBeenCalledWith(expect.anything())
+  })
+
+  it('subscribeExpenseLabels calls onSnapshot on expenseLabels collection', () => {
+    const cb = vi.fn()
+    subscribeExpenseLabels(TRIP_ID, cb)
+    expect(onSnapshot).toHaveBeenCalled()
+  })
+
+  it('addExpenseLabel calls addDoc with name, createdBy, createdAt', async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: 'lbl1' })
+    await addExpenseLabel(TRIP_ID, 'Food', 'u1')
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ name: 'Food', createdBy: 'u1' })
+    )
+  })
+})
