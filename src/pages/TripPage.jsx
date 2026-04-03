@@ -7,6 +7,7 @@ import InvitePopup from '../components/InvitePopup'
 import { getTripEmoji } from '../utils/trips'
 import { getTripMembers } from '../utils/firestore'
 import ChecklistTab from '../components/ChecklistTab'
+import MealsTab from '../components/MealsTab'
 
 export default function TripPage({ user }) {
   const { tripId }   = useParams()
@@ -62,7 +63,7 @@ export default function TripPage({ user }) {
         <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap' }}>
           {['Checklist', 'Expenses', 'Meals', 'Itinerary'].map(tab => {
             const isActive    = activeTab === tab
-            const isAvailable = tab === 'Checklist'
+            const isAvailable = tab === 'Checklist' || tab === 'Meals'
             return (
               <div
                 key={tab}
@@ -86,6 +87,10 @@ export default function TripPage({ user }) {
         {/* Tab content */}
         {activeTab === 'Checklist' && (
           <ChecklistTab trip={trip} user={user} />
+        )}
+
+        {activeTab === 'Meals' && (
+          <MealsTab trip={trip} user={user} />
         )}
 
         {/* Member list */}
