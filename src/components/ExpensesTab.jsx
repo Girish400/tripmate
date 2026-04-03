@@ -21,22 +21,29 @@ export default function ExpensesTab({ trip, user }) {
       setLoading(false)
     })
     const unsub2 = subscribeExpenseLabels(trip.tripId, setLabels)
-    getTripFamilies(trip.tripId).then(setFamilies)
+    getTripFamilies(trip.tripId).then(setFamilies).catch(() => {})
     return () => { unsub1(); unsub2() }
   }, [trip.tripId])
 
   async function handleSave(data) {
-    if (editingExpense?.expenseId) {
-      await updateExpense(trip.tripId, editingExpense.expenseId, data)
-    } else {
-      await addExpense(trip.tripId, { ...data, createdBy: user.uid })
+    try {
+      if (editingExpense?.expenseId) {
+        await updateExpense(trip.tripId, editingExpense.expenseId, data)
+      } else {
+        await addExpense(trip.tripId, { ...data, createdBy: user.uid })
+      }
+      setEditingExpense(null)
+    } catch {
+      setEditingExpense(null)
     }
-    setEditingExpense(null)
   }
 
   async function handleDelete(expenseId) {
-    await deleteExpense(trip.tripId, expenseId)
-    setEditingExpense(null)
+    try {
+      await deleteExpense(trip.tripId, expenseId)
+    } finally {
+      setEditingExpense(null)
+    }
   }
 
   async function handleAddLabel(name) {
