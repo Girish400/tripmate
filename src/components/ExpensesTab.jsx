@@ -33,8 +33,9 @@ export default function ExpensesTab({ trip, user }) {
         await addExpense(trip.tripId, { ...data, createdBy: user.uid })
       }
       setEditingExpense(null)
-    } catch {
-      setEditingExpense(null)
+    } catch (err) {
+      console.error('Failed to save expense:', err)
+      // keep form open so user can retry
     }
   }
 
