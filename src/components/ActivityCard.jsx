@@ -1,4 +1,5 @@
 function formatTime(hhmm) {
+  if (!hhmm) return '—'
   const [h, m] = hhmm.split(':').map(Number)
   const ampm = h >= 12 ? 'PM' : 'AM'
   const hour = h % 12 || 12
@@ -7,7 +8,7 @@ function formatTime(hhmm) {
 
 export default function ActivityCard({ item, type, user, onEdit, onDelete }) {
   if (type === 'meal') {
-    const slotLabel = item.slot[0].toUpperCase() + item.slot.slice(1)
+    const slotLabel = item.slot ? item.slot[0].toUpperCase() + item.slot.slice(1) : 'Meal'
     return (
       <div
         data-testid={`meal-card-itinerary-${item.mealId}`}
