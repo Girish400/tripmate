@@ -36,6 +36,23 @@ describe('ActivityEditForm', () => {
     expect(screen.getByTestId('form-save').style.opacity).toBe('1')
   })
 
+  it('save button stays disabled when title is filled but time is empty', () => {
+    render(<ActivityEditForm activity={null} families={mockFamilies} onSave={vi.fn()} onDelete={vi.fn()} onClose={vi.fn()} />)
+    fireEvent.change(screen.getByTestId('form-title'), { target: { value: 'Hike' } })
+    // time left empty
+    expect(screen.getByTestId('form-save').style.opacity).toBe('0.5')
+  })
+
+  it('calls onClose after successful save', async () => {
+    const onSave = vi.fn()
+    const onClose = vi.fn()
+    render(<ActivityEditForm activity={null} families={mockFamilies} onSave={onSave} onDelete={vi.fn()} onClose={onClose} />)
+    fireEvent.change(screen.getByTestId('form-title'), { target: { value: 'Hike' } })
+    fireEvent.change(screen.getByTestId('form-time'),  { target: { value: '09:00' } })
+    await act(async () => { fireEvent.click(screen.getByTestId('form-save')) })
+    expect(onClose).toHaveBeenCalled()
+  })
+
   it('calls onSave with correct fields when submitted', async () => {
     const onSave = vi.fn()
     render(<ActivityEditForm activity={null} families={mockFamilies} onSave={onSave} onDelete={vi.fn()} onClose={vi.fn()} />)

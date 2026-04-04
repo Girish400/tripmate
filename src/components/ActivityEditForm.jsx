@@ -24,6 +24,7 @@ export default function ActivityEditForm({ activity, families, onSave, onDelete,
       notes: notes.trim() || null,
       assignedTo: assignedTo || null,
     })
+    onClose()
   }
 
   const inputStyle = {
