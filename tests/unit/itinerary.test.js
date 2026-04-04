@@ -33,6 +33,22 @@ describe('itinerary Firestore utils', () => {
     ])
   })
 
+  it('subscribeActivities maps d.id to activityId', () => {
+    vi.mocked(onSnapshot).mockImplementation((_ref, fn) => {
+      fn({
+        docs: [
+          { id: 'doc-123', data: () => ({ title: 'Hike', time: '09:00', date: '2026-04-05' }) },
+        ],
+      })
+      return vi.fn()
+    })
+    const cb = vi.fn()
+    subscribeActivities(TRIP_ID, cb)
+    expect(cb).toHaveBeenCalledWith([
+      expect.objectContaining({ activityId: 'doc-123', title: 'Hike' }),
+    ])
+  })
+
   it('addActivity calls addDoc with correct fields', async () => {
     vi.mocked(addDoc).mockResolvedValue({ id: 'act1' })
     await addActivity(TRIP_ID, {
@@ -56,8 +72,9 @@ describe('itinerary Firestore utils', () => {
     )
   })
 
-  it('deleteActivity calls deleteDoc', async () => {
+  it('deleteActivity calls deleteDoc on the correct document', async () => {
     await deleteActivity(TRIP_ID, 'act1')
-    expect(deleteDoc).toHaveBeenCalledWith(expect.anything())
+    const callArg = deleteDoc.mock.calls[0][0]
+    expect(callArg.path).toMatch(/trips\/trip1\/activities\/act1/)
   })
 })
