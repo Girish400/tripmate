@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { subscribeActivities, addActivity, updateActivity, deleteActivity } from '../utils/itinerary'
 import { subscribeMeals } from '../utils/meals'
 import { getTripFamilies } from '../utils/firestore'
@@ -75,7 +75,7 @@ export default function ItineraryTab({ trip, user }) {
   const [loading,         setLoading]         = useState(true)
   const [editingActivity, setEditingActivity] = useState(null)
 
-  const days = tripDays(trip)
+  const days = useMemo(() => tripDays(trip), [trip.tripId])
   const [selectedDate, setSelectedDate] = useState(() => defaultSelectedDate(days))
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function ItineraryTab({ trip, user }) {
       } else {
         await addActivity(trip.tripId, { ...data, date: selectedDate, createdBy: user.uid })
       }
-      // form calls onClose() itself after onSave resolves
+      setEditingActivity(null)
     } catch (err) {
       console.error('Failed to save activity:', err)
     }
