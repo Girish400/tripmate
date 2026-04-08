@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getUserTrips, getTripStatus } from '../utils/trips'
+import { deleteTrip } from '../utils/firestore'
 import Navbar from '../components/Navbar'
 import TripCard from '../components/TripCard'
 import NewTripModal from '../components/NewTripModal'
+import EditTripModal from '../components/EditTripModal'
 import InvitePopup from '../components/InvitePopup'
 
 export default function HomePage({ user }) {
@@ -11,6 +13,7 @@ export default function HomePage({ user }) {
   const [loading, setLoading]       = useState(true)
   const [showModal, setShowModal]   = useState(false)
   const [inviteTrip, setInviteTrip] = useState(null)
+  const [editTrip, setEditTrip]     = useState(null)
   const [completedOpen, setCompletedOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -23,6 +26,16 @@ export default function HomePage({ user }) {
     })
     return () => { mounted = false }
   }, [user.uid])
+
+  const handleDelete = async (trip) => {
+    if (!window.confirm(`Delete "${trip.name}"? This cannot be undone.`)) return
+    await deleteTrip(trip.tripId, trip.inviteCode)
+    setTrips(ts => ts.filter(t => t.tripId !== trip.tripId))
+  }
+
+  const handleEdited = (updatedTrip) => {
+    setTrips(ts => ts.map(t => t.tripId === updatedTrip.tripId ? { ...t, ...updatedTrip } : t))
+  }
 
   const active    = trips.filter(t => getTripStatus(t) !== 'completed')
   const completed = trips.filter(t => getTripStatus(t) === 'completed')
@@ -86,6 +99,8 @@ export default function HomePage({ user }) {
                   key={trip.tripId} trip={trip} currentUserId={user.uid}
                   onOpen={id => navigate(`/trip/${id}`)}
                   onInvite={t => setInviteTrip(t)}
+                  onEdit={t => setEditTrip(t)}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
@@ -122,6 +137,8 @@ export default function HomePage({ user }) {
                         key={trip.tripId} trip={trip} currentUserId={user.uid}
                         onOpen={id => navigate(`/trip/${id}`)}
                         onInvite={() => {}}
+                        onEdit={t => setEditTrip(t)}
+                        onDelete={handleDelete}
                       />
                     ))}
                   </div>
@@ -137,6 +154,14 @@ export default function HomePage({ user }) {
           user={user}
           onClose={() => setShowModal(false)}
           onCreated={id => { setShowModal(false); navigate(`/trip/${id}`) }}
+        />
+      )}
+
+      {editTrip && (
+        <EditTripModal
+          trip={editTrip}
+          onClose={() => setEditTrip(null)}
+          onSaved={handleEdited}
         />
       )}
 

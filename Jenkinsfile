@@ -8,33 +8,39 @@ pipeline {
   }
 
   environment {
-    CI = 'true'
+    CI       = 'true'
+    PROJ_DIR = 'C:/Users/Girish/Desktop/tripmate'
   }
 
   stages {
 
     stage('Install') {
       steps {
-        sh 'node --version'
-        sh 'npm --version'
-        sh 'npm ci'
+        bat """
+          cd /d "%PROJ_DIR%"
+          node --version
+          npm --version
+        """
       }
     }
 
     stage('Lint') {
       steps {
-        sh 'npm run lint'
+        // Warnings are OK; only hard ESLint errors (exit 1) fail the stage.
+        bat """
+          cd /d "%PROJ_DIR%"
+          npm run lint -- --max-warnings 9999
+        """
       }
     }
 
     stage('Unit Tests') {
       steps {
-        sh '''
-          npx vitest run tests/unit \
-            --reporter=verbose \
-            --reporter=junit \
-            --outputFile.junit=reports/unit-results.xml
-        '''
+        bat """
+          if not exist "%WORKSPACE%\\reports" mkdir "%WORKSPACE%\\reports"
+          cd /d "%PROJ_DIR%"
+          npx vitest run tests/unit --reporter=verbose --reporter=junit "--outputFile.junit=%WORKSPACE%\\reports\\unit-results.xml"
+        """
       }
       post {
         always {
@@ -45,12 +51,11 @@ pipeline {
 
     stage('Integration Tests') {
       steps {
-        sh '''
-          npx vitest run tests/integration \
-            --reporter=verbose \
-            --reporter=junit \
-            --outputFile.junit=reports/integration-results.xml
-        '''
+        bat """
+          if not exist "%WORKSPACE%\\reports" mkdir "%WORKSPACE%\\reports"
+          cd /d "%PROJ_DIR%"
+          npx vitest run tests/integration --reporter=verbose --reporter=junit "--outputFile.junit=%WORKSPACE%\\reports\\integration-results.xml"
+        """
       }
       post {
         always {
@@ -61,40 +66,31 @@ pipeline {
 
     stage('Coverage') {
       steps {
-        sh '''
-          npx vitest run \
-            --coverage \
-            --reporter=junit \
-            --outputFile.junit=reports/coverage-results.xml
-        '''
+        bat """
+          if not exist "%WORKSPACE%\\reports" mkdir "%WORKSPACE%\\reports"
+          cd /d "%PROJ_DIR%"
+          npx vitest run --coverage --reporter=junit "--outputFile.junit=%WORKSPACE%\\reports\\coverage-results.xml"
+        """
       }
       post {
         always {
           junit testResults: 'reports/coverage-results.xml', allowEmptyResults: true
-          publishHTML(target: [
-            allowMissing         : true,
-            alwaysLinkToLastBuild: true,
-            keepAll              : true,
-            reportDir            : 'coverage',
-            reportFiles          : 'index.html',
-            reportName           : 'Coverage Report',
-          ])
         }
       }
     }
 
     stage('Build') {
       steps {
-        sh 'npm run build'
-        archiveArtifacts artifacts: 'dist/**', fingerprint: true
+        bat """
+          cd /d "%PROJ_DIR%"
+          npm run build
+        """
+        archiveArtifacts artifacts: "${env.PROJ_DIR}/dist/**", fingerprint: true
       }
     }
   }
 
   post {
-    always {
-      cleanWs()
-    }
     success {
       echo 'All stages passed.'
     }

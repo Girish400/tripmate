@@ -21,6 +21,7 @@ const wrap = (itemOverrides = {}, propOverrides = {}) => {
     currentFamilyId,
     onToggleCheck: vi.fn(),
     onToggleLock: vi.fn(),
+    onLockItem: vi.fn(),
     onSetMode: vi.fn(),
     ...propOverrides,
   }
@@ -42,13 +43,15 @@ describe('ChecklistItemRow', () => {
 
   it('shows unlock icon + name after checking', () => {
     wrap({ checks: { fA: { checkedBy: 'u1', displayName: 'Girish', lockedAt: null } } })
-    expect(screen.getByText('🔓')).toBeTruthy()
+    // Two 🔓 present: standalone item-lock-btn + check-lock-btn
+    expect(screen.getAllByText('🔓').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByTestId('check-lock-btn')).toBeTruthy()
     expect(screen.getByText('Girish')).toBeTruthy()
   })
 
-  it('shows lock icon when item is locked', () => {
+  it('shows lock icon when item is locked (check-level)', () => {
     wrap({ checks: { fA: { checkedBy: 'u1', displayName: 'Girish', lockedAt: new Date() } } })
-    expect(screen.getByText('🔒')).toBeTruthy()
+    expect(screen.getByTestId('check-lock-btn').textContent).toBe('🔒')
   })
 
   it('disables checkbox when locked by a different user', () => {
@@ -98,7 +101,7 @@ describe('ChecklistItemRow', () => {
       { checks: { fA: { checkedBy: 'u1', displayName: 'Girish', lockedAt: null } } },
       { onToggleLock }
     )
-    fireEvent.click(screen.getByText('🔓'))
+    fireEvent.click(screen.getByTestId('check-lock-btn'))
     expect(onToggleLock).toHaveBeenCalledWith(
       expect.objectContaining({ itemId: 'i1' }),
       'fA',

@@ -5,7 +5,7 @@ import { CATEGORY_ICONS } from '../utils/checklistTemplates'
 export default function ChecklistCategory({
   category, items, families,
   currentUser, currentFamilyId,
-  onToggleCheck, onToggleLock, onSetMode, onAddItem,
+  onToggleCheck, onToggleLock, onLockItem, onSetMode, onAddItem,
 }) {
   const [expanded, setExpanded]       = useState(true)
   const [addingItem, setAddingItem]   = useState(false)
@@ -82,6 +82,7 @@ export default function ChecklistCategory({
                   currentFamilyId={currentFamilyId}
                   onToggleCheck={onToggleCheck}
                   onToggleLock={onToggleLock}
+                  onLockItem={onLockItem}
                   onSetMode={onSetMode}
                 />
               ))}

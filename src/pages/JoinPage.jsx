@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { signInWithPopup } from 'firebase/auth'
+import { auth, googleProvider } from '../firebase'
+import { upsertUser } from '../utils/auth'
 import { getTripByCode, isAlreadyMember, getTripFamilies, joinTrip } from '../utils/firestore'
 import { getTripEmoji } from '../utils/trips'
 import Navbar from '../components/Navbar'
@@ -13,6 +16,27 @@ export default function JoinPage({ user }) {
   const [selectedFamily, setSelectedFamily] = useState('')
   const [newFamilyName, setNewFamilyName]   = useState('')
   const [joining, setJoining]   = useState(false)
+  const [signingIn, setSigningIn] = useState(false)
+  const [signInError, setSignInError] = useState(null)
+
+  const handleSignIn = async () => {
+    setSigningIn(true)
+    setSignInError(null)
+    try {
+      const result = await signInWithPopup(auth, googleProvider)
+      await upsertUser(result.user)
+      // onAuthStateChanged in App.jsx will re-render JoinPage with the new user
+    } catch (err) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        setSignInError('Login cancelled. Try again when ready.')
+      } else if (err.code === 'auth/popup-blocked') {
+        setSignInError('Popup blocked. Please allow popups and try again.')
+      } else {
+        setSignInError('Sign-in failed. Please try again.')
+      }
+      setSigningIn(false)
+    }
+  }
 
   // Store invite code for post-login redirect
   useEffect(() => {
@@ -52,8 +76,44 @@ export default function JoinPage({ user }) {
   const canJoin = selectedFamily && (selectedFamily !== 'new' || newFamilyName.trim())
 
   if (!user) return (
-    <div style={{ minHeight:'100vh', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ color:'#fff', fontSize:16 }}>Sign in to join this trip</div>
+    <div style={{ minHeight:'100vh', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div style={{
+        background:'rgba(10,20,40,0.8)', border:'1px solid rgba(255,255,255,0.12)',
+        borderRadius:20, padding:'32px 28px', width:'100%', maxWidth:320, textAlign:'center',
+        boxShadow:'0 8px 40px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ fontSize:36, marginBottom:8 }}>🏕️</div>
+        <div style={{ color:'#fff', fontSize:18, fontWeight:700, marginBottom:6 }}>Join a Trip</div>
+        <div style={{ color:'#a8c8e8', fontSize:13, marginBottom:24 }}>
+          Sign in to join this trip on TripMate
+        </div>
+        {signInError && (
+          <div role="alert" style={{ color:'#ff6b6b', fontSize:11, marginBottom:12 }}>{signInError}</div>
+        )}
+        <button
+          onClick={handleSignIn}
+          disabled={signingIn}
+          aria-label="Sign in with Google to join this trip"
+          style={{
+            width:'100%', background:'#4285F4', border:'none', borderRadius:10,
+            padding:'11px 16px', display:'flex', alignItems:'center',
+            justifyContent:'center', gap:10, cursor: signingIn ? 'not-allowed' : 'pointer',
+            boxShadow:'0 4px 14px rgba(66,133,244,0.45)', opacity: signingIn ? 0.7 : 1,
+          }}
+        >
+          <div style={{
+            background:'#fff', borderRadius:'50%', width:20, height:20,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:12, fontWeight:800, color:'#4285F4', flexShrink:0,
+          }}>G</div>
+          <span style={{ color:'#fff', fontSize:13, fontWeight:600 }}>
+            {signingIn ? 'Signing in…' : 'Login with Gmail'}
+          </span>
+        </button>
+        <div style={{ color:'rgba(255,255,255,0.35)', fontSize:10, marginTop:16 }}>
+          Gmail accounts only · Secure sign-in
+        </div>
+      </div>
     </div>
   )
 

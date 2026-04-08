@@ -1,6 +1,6 @@
 import {
   collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, arrayUnion, serverTimestamp, Timestamp,
+  updateDoc, deleteDoc, arrayUnion, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { generateUniqueCode } from './trips'
@@ -84,4 +84,17 @@ export async function getTripFamilies(tripId) {
 export async function getTripMembers(tripId) {
   const snap = await getDocs(collection(db, 'trips', tripId, 'members'))
   return snap.docs.map(d => ({ memberId: d.id, ...d.data() }))
+}
+
+export async function deleteTrip(tripId, inviteCode) {
+  await deleteDoc(doc(db, 'trips', tripId))
+  if (inviteCode) await deleteDoc(doc(db, 'inviteCodes', inviteCode))
+}
+
+export async function updateTrip(tripId, { name, destination, tripType, startDate, endDate }) {
+  await updateDoc(doc(db, 'trips', tripId), {
+    name, destination, tripType,
+    startDate: Timestamp.fromDate(new Date(startDate)),
+    endDate:   Timestamp.fromDate(new Date(endDate)),
+  })
 }

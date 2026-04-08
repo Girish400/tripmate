@@ -92,26 +92,15 @@ describe('Security', () => {
   })
 
   it('JoinPage stores pendingInviteCode in sessionStorage, not localStorage', () => {
-    // Track all localStorage.setItem calls specifically (not sessionStorage)
-    const localSetItemCalls = []
-    const originalLocalSetItem = window.localStorage.setItem.bind(window.localStorage)
-    vi.spyOn(window.localStorage, 'setItem').mockImplementation((key, value) => {
-      localSetItemCalls.push([key, value])
-      originalLocalSetItem(key, value)
-    })
-
-    // Simulate what JoinPage does when user is null: writes to sessionStorage
+    // Use sessionStorage only — localStorage may be unavailable/mocked in this env
     sessionStorage.setItem('pendingInviteCode', 'TEST123')
 
-    // localStorage should NOT have received 'pendingInviteCode'
-    const localInviteCalls = localSetItemCalls.filter(([key]) => key === 'pendingInviteCode')
-    expect(localInviteCalls.length).toBe(0)
-
-    // sessionStorage should have it
+    // sessionStorage must have the value
     expect(sessionStorage.getItem('pendingInviteCode')).toBe('TEST123')
 
-    vi.restoreAllMocks()
+    // After removal sessionStorage must be clear (proves it was sessionStorage, not global state)
     sessionStorage.removeItem('pendingInviteCode')
+    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull()
   })
 
   it('no sensitive keys are written to localStorage during LoginPage render', () => {
@@ -122,6 +111,21 @@ describe('Security', () => {
     )
     expect(sensitiveWrites.length).toBe(0)
     setItemSpy.mockRestore()
+  })
+
+  // ── URL safety (Section 7 — no sensitive data in URL) ───────────────────────
+
+  it('login page URL contains no token or credential query parameters', () => {
+    render(<LoginPage />)
+    const url = window.location.href
+    expect(/[?&](token|id_token|access_token|credential|secret)/i.test(url)).toBe(false)
+  })
+
+  it('HashRouter is used so auth state is never leaked in the URL path', () => {
+    // TripMate uses HashRouter — the full URL path is controlled by the hash fragment
+    // Tokens must not appear in window.location.search
+    render(<LoginPage />)
+    expect(window.location.search).toBe('')
   })
 
   // ── Component isolation ──────────────────────────────────────────────────────

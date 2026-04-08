@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import Navbar from '../../src/components/Navbar'
@@ -44,6 +44,24 @@ describe('Navbar', () => {
     renderNavbar()
     fireEvent.click(screen.getByText('Sign Out'))
     expect(signOut).toHaveBeenCalled()
+  })
+
+  // Section 1 — Core: Verify logout clears session and redirects to login page
+  it('navigates to / (login page) after signOut resolves', async () => {
+    vi.mocked(signOut).mockResolvedValue()
+    const { container } = render(
+      <MemoryRouter initialEntries={['/home']}>
+        <Routes>
+          <Route path="/home" element={<Navbar user={mockUser} />} />
+          <Route path="/" element={<div data-testid="login-page-sentinel" />} />
+        </Routes>
+      </MemoryRouter>
+    )
+    fireEvent.click(screen.getByText('Sign Out'))
+    // After signOut resolves, navigate('/') renders the login route
+    await waitFor(() =>
+      expect(container.querySelector('[data-testid="login-page-sentinel"]')).toBeTruthy()
+    )
   })
 
   it('shows My Trips back button when showBack is true', () => {

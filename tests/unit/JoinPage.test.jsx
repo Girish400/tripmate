@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import JoinPage from '../../src/pages/JoinPage'
 
@@ -14,6 +14,19 @@ vi.mock('../../src/utils/trips', () => ({
   getTripEmoji: vi.fn(() => '⛺'),
   getUserTrips: vi.fn(() => Promise.resolve([])),
   getTripStatus: vi.fn(() => 'upcoming'),
+}))
+
+vi.mock('../../src/firebase', () => ({
+  auth: {},
+  googleProvider: {},
+}))
+
+vi.mock('firebase/auth', () => ({
+  signInWithPopup: vi.fn(() => Promise.resolve({ user: { uid: 'u2', displayName: 'Jane' } })),
+}))
+
+vi.mock('../../src/utils/auth', () => ({
+  upsertUser: vi.fn(() => Promise.resolve()),
 }))
 
 const mockUser = { uid: 'u2', displayName: 'Jane', email: 'j@gmail.com', photoURL: '' }
@@ -39,6 +52,18 @@ describe('JoinPage', () => {
   it('shows login prompt when user is null', () => {
     renderJoin('RTX924', null)
     expect(screen.getByText(/Sign in to join/i)).toBeTruthy()
+  })
+
+  it('shows Gmail sign-in button when user is null', () => {
+    renderJoin('RTX924', null)
+    expect(screen.getByRole('button', { name: /sign in with google/i })).toBeTruthy()
+  })
+
+  it('calls signInWithPopup when sign-in button clicked', async () => {
+    const { signInWithPopup } = await import('firebase/auth')
+    renderJoin('RTX924', null)
+    fireEvent.click(screen.getByRole('button', { name: /sign in with google/i }))
+    await waitFor(() => expect(signInWithPopup).toHaveBeenCalled())
   })
 
   it('shows trip preview after loading', async () => {

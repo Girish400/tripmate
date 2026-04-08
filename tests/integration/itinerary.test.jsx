@@ -5,17 +5,17 @@ import * as itineraryUtils from '../../src/utils/itinerary'
 import * as mealsUtils from '../../src/utils/meals'
 import * as firestoreUtils from '../../src/utils/firestore'
 
-// Trip: Apr 5–7, 2026 (3 days). Today (2026-04-03) is before start → defaults to Day 1.
+// Trip: Apr 5–7, 2027 (3 days). Today is always before start → defaults to Day 1.
 const mockTrip = {
   tripId: 'trip1',
-  startDate: new Date(2026, 3, 5),  // Apr 5
-  endDate:   new Date(2026, 3, 7),  // Apr 7
+  startDate: new Date(2027, 3, 5),  // Apr 5 2027
+  endDate:   new Date(2027, 3, 7),  // Apr 7 2027
 }
 const mockUser = { uid: 'u1', displayName: 'Test User' }
 
 const mockActivities = [
-  { activityId: 'a1', title: 'Hike', time: '09:00', date: '2026-04-05', icon: '🥾', location: 'Trail', notes: null, assignedTo: null, createdBy: 'u1' },
-  { activityId: 'a2', title: 'Museum', time: '14:00', date: '2026-04-06', icon: '🎭', location: null, notes: null, assignedTo: null, createdBy: 'u2' },
+  { activityId: 'a1', title: 'Hike', time: '09:00', date: '2027-04-05', icon: '🥾', location: 'Trail', notes: null, assignedTo: null, createdBy: 'u1' },
+  { activityId: 'a2', title: 'Museum', time: '14:00', date: '2027-04-06', icon: '🎭', location: null, notes: null, assignedTo: null, createdBy: 'u2' },
 ]
 
 // Meal on day 0 = Apr 5
@@ -51,15 +51,15 @@ describe('ItineraryTab integration', () => {
 
   it('renders day tabs for each trip day', () => {
     render(<ItineraryTab trip={mockTrip} user={mockUser} />)
-    expect(screen.getByTestId('day-tab-2026-04-05')).toBeTruthy()
-    expect(screen.getByTestId('day-tab-2026-04-06')).toBeTruthy()
-    expect(screen.getByTestId('day-tab-2026-04-07')).toBeTruthy()
+    expect(screen.getByTestId('day-tab-2027-04-05')).toBeTruthy()
+    expect(screen.getByTestId('day-tab-2027-04-06')).toBeTruthy()
+    expect(screen.getByTestId('day-tab-2027-04-07')).toBeTruthy()
   })
 
   it('defaults to Day 1 when today is outside the trip range', () => {
     render(<ItineraryTab trip={mockTrip} user={mockUser} />)
     // Day 1 tab should be active (blue style applied)
-    const tab = screen.getByTestId('day-tab-2026-04-05')
+    const tab = screen.getByTestId('day-tab-2027-04-05')
     expect(tab.style.background).toMatch(/rgba\(66,?\s*133,?\s*244/)
   })
 
@@ -97,7 +97,7 @@ describe('ItineraryTab integration', () => {
     })
     render(<ItineraryTab trip={mockTrip} user={mockUser} />)
     // Switch to Day 2 (Apr 6) — meal m1 is on Apr 5, should disappear
-    fireEvent.click(screen.getByTestId('day-tab-2026-04-06'))
+    fireEvent.click(screen.getByTestId('day-tab-2027-04-06'))
     expect(screen.queryByTestId('meal-card-itinerary-m1')).toBeNull()
   })
 
@@ -118,7 +118,7 @@ describe('ItineraryTab integration', () => {
     expect(itineraryUtils.addActivity).toHaveBeenCalledWith('trip1', expect.objectContaining({
       title: 'Hike',
       time: '09:00',
-      date: '2026-04-05',
+      date: '2027-04-05',
       createdBy: 'u1',
     }))
   })
@@ -132,7 +132,7 @@ describe('ItineraryTab integration', () => {
     // a1 belongs to u1 — buttons visible
     expect(screen.getByTestId('edit-btn-a1')).toBeTruthy()
     // Switch to Day 2 to see a2 (belongs to u2)
-    fireEvent.click(screen.getByTestId('day-tab-2026-04-06'))
+    fireEvent.click(screen.getByTestId('day-tab-2027-04-06'))
     expect(screen.queryByTestId('edit-btn-a2')).toBeNull()
   })
 

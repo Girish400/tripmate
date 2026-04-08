@@ -55,6 +55,15 @@ export async function toggleLock(tripId, itemId, mode, familyId, isLocked) {
 }
 
 /**
+ * Toggle a top-level item lock. When locked, no one can check/uncheck the item.
+ * isLocked: current state (true = currently locked, will unlock)
+ */
+export async function lockItem(tripId, itemId, isLocked) {
+  const ref = doc(db, 'trips', tripId, 'checklistItems', itemId)
+  await updateDoc(ref, { locked: !isLocked })
+}
+
+/**
  * Cycle item mode: per-family → shared → na → per-family.
  * Clears all check state atomically when mode changes.
  */

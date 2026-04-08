@@ -12,19 +12,21 @@ const cell = (extra = {}) => ({
 
 export default function ChecklistItemRow({
   item, families, currentUser, currentFamilyId,
-  onToggleCheck, onToggleLock, onSetMode,
+  onToggleCheck, onToggleLock, onLockItem, onSetMode,
 }) {
   const isNA     = item.mode === 'na'
   const isShared = item.mode === 'shared'
+  const isLocked = !!item.locked
 
   // ── Shared check helpers ──────────────────────────────────────
-  const sc            = item.sharedCheck
-  const sharedChecked = !!sc
-  const sharedLocked  = sharedChecked && !!sc.lockedAt
-  const sharedCanAct  = !sharedLocked || sc.checkedBy === currentUser.uid
+  const sc               = item.sharedCheck
+  const sharedChecked    = !!sc
+  const sharedCheckLocked = sharedChecked && !!sc.lockedAt
+  const sharedCanAct     = !isLocked && (!sharedCheckLocked || sc.checkedBy === currentUser.uid)
 
   // ── Per-family check helpers ──────────────────────────────────
   const familyCanAct = (familyId) => {
+    if (isLocked) return false
     if (familyId !== currentFamilyId) return false
     const ch = item.checks?.[familyId]
     if (!ch) return true
@@ -33,13 +35,26 @@ export default function ChecklistItemRow({
   }
 
   return (
-    <tr>
-      {/* Item name */}
+    <tr style={{ opacity: isLocked ? 0.6 : 1 }}>
+      {/* Item name + lock button */}
       <td style={cell({ color: isNA ? 'var(--text-dim)' : 'var(--text-primary)', fontSize: 13 })}>
-        {isNA
-          ? <span data-testid="item-name-na" style={{ textDecoration: 'line-through' }}>{item.name}</span>
-          : item.name
-        }
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            title={isLocked ? 'Unlock item' : 'Lock item'}
+            onClick={() => onLockItem(item)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 14, padding: 0, lineHeight: 1, flexShrink: 0,
+              opacity: isLocked ? 1 : 0.35,
+            }}
+          >
+            {isLocked ? '🔒' : '🔓'}
+          </button>
+          {isNA
+            ? <span data-testid="item-name-na" style={{ textDecoration: 'line-through' }}>{item.name}</span>
+            : item.name
+          }
+        </div>
       </td>
 
       {/* NA: dashes in all family cells */}
@@ -63,11 +78,12 @@ export default function ChecklistItemRow({
             {sharedChecked && (
               <>
                 <button
-                  onClick={() => sc.checkedBy === currentUser.uid && onToggleLock(item, null, sharedLocked)}
+                  data-testid="check-lock-btn"
+                  onClick={() => sc.checkedBy === currentUser.uid && onToggleLock(item, null, sharedCheckLocked)}
                   disabled={sc.checkedBy !== currentUser.uid}
                   style={{ background: 'none', border: 'none', cursor: sc.checkedBy === currentUser.uid ? 'pointer' : 'default', fontSize: 14 }}
                 >
-                  {sharedLocked ? '🔒' : '🔓'}
+                  {sharedCheckLocked ? '🔒' : '🔓'}
                 </button>
                 <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{sc.displayName}</span>
               </>
@@ -78,10 +94,10 @@ export default function ChecklistItemRow({
 
       {/* Per-family: one checkbox per family */}
       {!isNA && !isShared && families.map(f => {
-        const ch        = item.checks?.[f.familyId]
-        const isChecked = !!ch
-        const isLocked  = isChecked && !!ch.lockedAt
-        const canAct    = familyCanAct(f.familyId)
+        const ch           = item.checks?.[f.familyId]
+        const isChecked    = !!ch
+        const isCheckLocked = isChecked && !!ch.lockedAt
+        const canAct       = familyCanAct(f.familyId)
 
         return (
           <td key={f.familyId} style={cell({ textAlign: 'center' })}>
@@ -96,11 +112,12 @@ export default function ChecklistItemRow({
               {isChecked && (
                 <>
                   <button
-                    onClick={() => ch.checkedBy === currentUser.uid && onToggleLock(item, f.familyId, isLocked)}
+                    data-testid="check-lock-btn"
+                    onClick={() => ch.checkedBy === currentUser.uid && onToggleLock(item, f.familyId, isCheckLocked)}
                     disabled={ch.checkedBy !== currentUser.uid}
                     style={{ background: 'none', border: 'none', cursor: ch.checkedBy === currentUser.uid ? 'pointer' : 'default', fontSize: 13 }}
                   >
-                    {isLocked ? '🔒' : '🔓'}
+                    {isCheckLocked ? '🔒' : '🔓'}
                   </button>
                   <span style={{ color: 'var(--text-muted)', fontSize: 11, whiteSpace: 'nowrap' }}>{ch.displayName}</span>
                 </>
@@ -114,13 +131,15 @@ export default function ChecklistItemRow({
       <td style={cell({ textAlign: 'right', whiteSpace: 'nowrap' })}>
         <button
           data-testid="mode-toggle"
-          onClick={() => onSetMode(item, MODE_NEXT[item.mode])}
+          onClick={() => !isLocked && onSetMode(item, MODE_NEXT[item.mode])}
+          disabled={isLocked}
           style={{
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 6, padding: '3px 8px',
             color: isNA ? 'var(--text-dim)' : isShared ? '#4285F4' : 'var(--text-muted)',
-            fontSize: 10, cursor: 'pointer',
+            fontSize: 10, cursor: isLocked ? 'not-allowed' : 'pointer',
+            opacity: isLocked ? 0.5 : 1,
           }}
         >
           {MODE_LABEL[item.mode]} 🔀

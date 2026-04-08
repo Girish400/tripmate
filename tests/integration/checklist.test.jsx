@@ -33,6 +33,7 @@ beforeEach(() => {
   vi.spyOn(checklistUtils, 'initChecklistFromTemplate').mockResolvedValue()
   vi.spyOn(checklistUtils, 'toggleCheck').mockResolvedValue()
   vi.spyOn(checklistUtils, 'toggleLock').mockResolvedValue()
+  vi.spyOn(checklistUtils, 'lockItem').mockResolvedValue()
   vi.spyOn(checklistUtils, 'setMode').mockResolvedValue()
   vi.spyOn(checklistUtils, 'addItem').mockResolvedValue()
 })
@@ -71,9 +72,9 @@ describe('ChecklistTab integration', () => {
       return vi.fn()
     })
     render(<ChecklistTab trip={trip} user={user} />)
-    await waitFor(() => screen.getByText('🔓'))
+    await waitFor(() => screen.getByTestId('check-lock-btn'))
 
-    fireEvent.click(screen.getByText('🔓'))
+    fireEvent.click(screen.getByTestId('check-lock-btn'))
     expect(checklistUtils.toggleLock).toHaveBeenCalledWith(
       'trip1', 'i1', 'per-family', 'fA', false
     )

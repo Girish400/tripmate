@@ -6,7 +6,7 @@ const STATUS_COLORS = {
   completed: { dot: '#556677', label: 'Completed' },
 }
 
-export default function TripCard({ trip, currentUserId, onOpen, onInvite }) {
+export default function TripCard({ trip, currentUserId, onOpen, onInvite, onEdit, onDelete }) {
   const status   = getTripStatus(trip)
   const emoji    = getTripEmoji(trip.tripType)
   const isHost   = trip.hostId === currentUserId
@@ -35,6 +35,30 @@ export default function TripCard({ trip, currentUserId, onOpen, onInvite }) {
       }}>
         {isHost ? 'HOST' : 'MEMBER'}
       </div>
+
+      {/* Host action buttons */}
+      {isHost && (
+        <div style={{ position: 'absolute', top: 28, right: 10, display: 'flex', gap: 4 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onEdit && onEdit(trip) }}
+            title="Edit trip"
+            style={{
+              background: 'rgba(66,133,244,0.15)', border: '1px solid rgba(66,133,244,0.3)',
+              borderRadius: 5, padding: '2px 6px', color: '#7eb8f7',
+              fontSize: 10, cursor: 'pointer',
+            }}
+          >✏️</button>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete && onDelete(trip) }}
+            title="Delete trip"
+            style={{
+              background: 'rgba(234,67,53,0.15)', border: '1px solid rgba(234,67,53,0.3)',
+              borderRadius: 5, padding: '2px 6px', color: '#ff7b72',
+              fontSize: 10, cursor: 'pointer',
+            }}
+          >🗑</button>
+        </div>
+      )}
 
       <div style={{ fontSize: 24, marginBottom: 6 }}>{emoji}</div>
       <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginBottom: 3 }}>
