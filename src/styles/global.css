@@ -20,6 +20,15 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
 }
+/* Force dark theme on all native select dropdowns app-wide */
+select {
+  color-scheme: dark;
+}
+select option {
+  background-color: #0d1520;
+  color: #ffffff;
+}
+
 .loading-screen {
   min-height: 100vh;
   background: var(--bg-primary);
