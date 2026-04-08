@@ -1,5 +1,5 @@
 // tests/integration/checklist.test.jsx
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ChecklistTab from '../../src/components/ChecklistTab'
 import * as checklistUtils from '../../src/utils/checklist'
@@ -38,6 +38,8 @@ beforeEach(() => {
   vi.spyOn(checklistUtils, 'setMode').mockResolvedValue()
   vi.spyOn(checklistUtils, 'addItem').mockResolvedValue()
 })
+
+afterEach(() => vi.restoreAllMocks())
 
 describe('ChecklistTab integration', () => {
   it('renders checklist items from snapshot', async () => {
