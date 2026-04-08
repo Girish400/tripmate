@@ -10,7 +10,6 @@ export function subscribeChecklist(tripId, callback) {
   const ref = collection(db, 'trips', tripId, 'checklistItems')
   return onSnapshot(ref, snap => {
     const items = snap.docs.map(d => ({ itemId: d.id, ...d.data() }))
-    // Sort by order ascending
     items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     callback(items)
   })
@@ -18,61 +17,57 @@ export function subscribeChecklist(tripId, callback) {
 
 /**
  * Check or uncheck a checkbox.
- * mode: 'per-family' | 'shared'
- * familyId: required for per-family, null for shared
- * isChecked: current state (true = currently checked, will uncheck)
+ * Initialises lockedBy/lockedByName to null on new check entries.
  */
 export async function toggleCheck(tripId, itemId, mode, familyId, uid, displayName, isChecked) {
   const ref = doc(db, 'trips', tripId, 'checklistItems', itemId)
+  const newEntry = { checkedBy: uid, displayName, lockedAt: null, lockedBy: null, lockedByName: null }
   if (mode === 'shared') {
-    await updateDoc(ref, {
-      sharedCheck: isChecked
-        ? deleteField()
-        : { checkedBy: uid, displayName, lockedAt: null },
-    })
+    await updateDoc(ref, { sharedCheck: isChecked ? deleteField() : newEntry })
   } else {
     await updateDoc(ref, {
-      [`checks.${familyId}`]: isChecked
-        ? deleteField()
-        : { checkedBy: uid, displayName, lockedAt: null },
+      [`checks.${familyId}`]: isChecked ? deleteField() : newEntry,
     })
   }
 }
 
 /**
  * Toggle lock on a checked item.
- * Only call this when checks[familyId].checkedBy === uid (enforced client-side).
- * isLocked: current state (true = currently locked, will unlock)
+ * On lock: writes lockedAt, lockedBy, lockedByName.
+ * On unlock: clears all three fields.
  */
-export async function toggleLock(tripId, itemId, mode, familyId, isLocked) {
+export async function toggleLock(tripId, itemId, mode, familyId, isLocked, uid, displayName) {
   const ref = doc(db, 'trips', tripId, 'checklistItems', itemId)
-  const field = mode === 'shared'
-    ? 'sharedCheck.lockedAt'
-    : `checks.${familyId}.lockedAt`
-  await updateDoc(ref, {
-    [field]: isLocked ? null : serverTimestamp(),
-  })
-}
-
-/**
- * Toggle a top-level item lock. When locked, no one can check/uncheck the item.
- * isLocked: current state (true = currently locked, will unlock)
- */
-export async function lockItem(tripId, itemId, isLocked) {
-  const ref = doc(db, 'trips', tripId, 'checklistItems', itemId)
-  await updateDoc(ref, { locked: !isLocked })
+  const prefix = mode === 'shared' ? 'sharedCheck' : `checks.${familyId}`
+  if (isLocked) {
+    await updateDoc(ref, {
+      [`${prefix}.lockedAt`]:     null,
+      [`${prefix}.lockedBy`]:     null,
+      [`${prefix}.lockedByName`]: null,
+    })
+  } else {
+    await updateDoc(ref, {
+      [`${prefix}.lockedAt`]:     serverTimestamp(),
+      [`${prefix}.lockedBy`]:     uid,
+      [`${prefix}.lockedByName`]: displayName,
+    })
+  }
 }
 
 /**
  * Cycle item mode: per-family → shared → na → per-family.
- * Clears all check state atomically when mode changes.
+ * Stores modeOwnerUid/modeOwnerName when switching to shared or na.
+ * Clears those fields when reverting to per-family.
  */
-export async function setMode(tripId, itemId, newMode) {
+export async function setMode(tripId, itemId, newMode, uid, displayName) {
   const ref = doc(db, 'trips', tripId, 'checklistItems', itemId)
+  const isOwned = newMode === 'shared' || newMode === 'na'
   await updateDoc(ref, {
     mode: newMode,
     checks: {},
     sharedCheck: null,
+    modeOwnerUid:  isOwned ? uid  : null,
+    modeOwnerName: isOwned ? displayName : null,
   })
 }
 
@@ -80,19 +75,19 @@ export async function setMode(tripId, itemId, newMode) {
 export async function addItem(tripId, category, name) {
   const ref = collection(db, 'trips', tripId, 'checklistItems')
   await addDoc(ref, {
-    name,
-    category,
+    name, category,
     mode: 'per-family',
     order: Date.now(),
     isCustom: true,
     checks: {},
     sharedCheck: null,
+    modeOwnerUid: null,
+    modeOwnerName: null,
   })
 }
 
 /**
  * Pre-populate checklist from template. No-op if items already exist.
- * Call once when ChecklistTab first mounts for a trip.
  */
 export async function initChecklistFromTemplate(tripId, tripType) {
   const ref = collection(db, 'trips', tripId, 'checklistItems')
@@ -107,13 +102,14 @@ export async function initChecklistFromTemplate(tripId, tripType) {
     items.forEach(name => {
       const itemRef = doc(ref)
       batch.set(itemRef, {
-        name,
-        category,
+        name, category,
         mode: 'per-family',
         order: order++,
         isCustom: false,
         checks: {},
         sharedCheck: null,
+        modeOwnerUid: null,
+        modeOwnerName: null,
       })
     })
   })

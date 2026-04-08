@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getTripFamilies, getTripMembers } from '../utils/firestore'
 import {
-  subscribeChecklist, toggleCheck, toggleLock, lockItem,
+  subscribeChecklist, toggleCheck, toggleLock,
   setMode, addItem, initChecklistFromTemplate,
 } from '../utils/checklist'
 import ChecklistProgress from './ChecklistProgress'
@@ -52,15 +52,11 @@ export default function ChecklistTab({ trip, user }) {
   }
 
   const handleToggleLock = (item, familyId, isLocked) => {
-    toggleLock(trip.tripId, item.itemId, item.mode, familyId, isLocked)
-  }
-
-  const handleLockItem = (item) => {
-    lockItem(trip.tripId, item.itemId, !!item.locked)
+    toggleLock(trip.tripId, item.itemId, item.mode, familyId, isLocked, user.uid, user.displayName)
   }
 
   const handleSetMode = (item, newMode) => {
-    setMode(trip.tripId, item.itemId, newMode)
+    setMode(trip.tripId, item.itemId, newMode, user.uid, user.displayName)
   }
 
   const handleAddItem = (category, name) => {
@@ -89,7 +85,6 @@ export default function ChecklistTab({ trip, user }) {
           currentFamilyId={currentFamilyId}
           onToggleCheck={handleToggleCheck}
           onToggleLock={handleToggleLock}
-          onLockItem={handleLockItem}
           onSetMode={handleSetMode}
           onAddItem={handleAddItem}
         />
