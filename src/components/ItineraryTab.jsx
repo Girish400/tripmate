@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { subscribeActivities, addActivity, updateActivity, deleteActivity } from '../utils/itinerary'
+import { subscribeActivities, addActivity, updateActivity, deleteActivity, toggleActivityLock } from '../utils/itinerary'
 import { subscribeMeals } from '../utils/meals'
 import { getTripFamilies } from '../utils/firestore'
 import ActivityCard from './ActivityCard'
@@ -109,6 +109,10 @@ export default function ItineraryTab({ trip, user }) {
     }
   }
 
+  async function handleToggleActivityLock(activity, isLocked) {
+    await toggleActivityLock(trip.tripId, activity.activityId, isLocked, user.uid, user.displayName)
+  }
+
   if (loading) {
     return (
       <div style={{ color: 'var(--text-muted)', padding: 24, textAlign: 'center', fontSize: 13 }}>
@@ -174,6 +178,7 @@ export default function ItineraryTab({ trip, user }) {
                 user={user}
                 onEdit={() => {}}
                 onDelete={() => {}}
+                onToggleLock={() => {}}
               />
             ) : (
               <ActivityCard
@@ -183,6 +188,7 @@ export default function ItineraryTab({ trip, user }) {
                 user={user}
                 onEdit={act => setEditingActivity(act)}
                 onDelete={handleDelete}
+                onToggleLock={handleToggleActivityLock}
               />
             )
           )}

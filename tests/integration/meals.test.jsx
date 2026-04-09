@@ -138,7 +138,7 @@ describe('MealsTab integration', () => {
   it('renders meals-tab with Meal Grid and Shopping List sub-tabs', () => {
     render(<MealsTab trip={mockTrip} user={mockUser} />)
     expect(screen.getByTestId('meals-tab')).toBeTruthy()
-    expect(screen.getByText('📅 Meal Grid')).toBeTruthy()
+    expect(screen.getByText('🍽️ Meal Plan')).toBeTruthy()
     expect(screen.getByText('🛒 Shopping List')).toBeTruthy()
   })
 

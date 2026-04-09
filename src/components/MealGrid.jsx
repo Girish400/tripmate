@@ -22,7 +22,7 @@ export function computeMealDays(startDate, endDate) {
   return days
 }
 
-export default function MealGrid({ trip, meals, onEdit, onDelete, onAdd }) {
+export default function MealGrid({ trip, meals, user, families, members, onEdit, onDelete, onAdd, onToggleLock }) {
   const days = computeMealDays(trip.startDate, trip.endDate)
 
   return (
@@ -60,9 +60,13 @@ export default function MealGrid({ trip, meals, onEdit, onDelete, onAdd }) {
                     day={day.index}
                     slot={slot}
                     meals={meals.filter(m => m.day === day.index && m.slot === slot)}
+                    user={user}
+                    families={families}
+                    members={members}
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onAdd={onAdd}
+                    onToggleLock={onToggleLock}
                   />
                 </td>
               ))}

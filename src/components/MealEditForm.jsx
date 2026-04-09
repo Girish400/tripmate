@@ -1,29 +1,41 @@
 import { useState } from 'react'
 
-// Used for both adding a new meal (mode='add') and editing an existing one (mode='edit').
-// props:
-//   mode        'add' | 'edit'
-//   meal        object | null   — null when mode='add'
-//   day         number          — 0-based day index (used when mode='add')
-//   slot        string          — meal slot (used when mode='add')
-//   onSave      (data) => void  — { dish, assignedTo, ingredients? }
-//   onDelete    (mealId) => void — only called in edit mode
-//   onClose     () => void
-export default function MealEditForm({ mode, meal, day, slot, onSave, onDelete, onClose }) {
-  const [dish,       setDish]       = useState(meal?.dish ?? '')
-  const [respType,   setRespType]   = useState(meal?.assignedTo?.type ?? 'everyone')
-  const [respLabel,  setRespLabel]  = useState(
-    meal?.assignedTo?.type !== 'everyone' ? (meal?.assignedTo?.label ?? '') : ''
-  )
+function buildOptions(user, families, members) {
+  const myMember   = members.find(m => m.uid === user.uid)
+  const myFamilyId = myMember?.familyId
+  const myFamily   = families.find(f => f.familyId === myFamilyId)
+  const otherFams  = families.filter(f => f.familyId !== myFamilyId)
+  const otherMems  = members.filter(m => m.uid !== user.uid)
+
+  return [
+    { type: 'person',   id: user.uid,  label: user.displayName, text: `👤 ${user.displayName} (you)` },
+    ...(myFamily ? [{ type: 'family', id: myFamily.familyId, label: myFamily.name, text: `👨‍👩‍👧 ${myFamily.name} (your fam)` }] : []),
+    { type: 'everyone', id: null,      label: 'Everyone',        text: '🌍 Everyone' },
+    ...otherFams.map(f => ({ type: 'family', id: f.familyId, label: f.name,         text: `👨‍👩‍👧 ${f.name}` })),
+    ...otherMems.map(m => ({ type: 'person', id: m.uid,     label: m.displayName,   text: `👤 ${m.displayName}` })),
+  ]
+}
+
+export default function MealEditForm({ mode, meal, day, slot, user, families, members, onSave, onDelete, onClose }) {
+  const options = buildOptions(user ?? { uid: '', displayName: '' }, families ?? [], members ?? [])
+
+  const initIndex = () => {
+    if (!meal) return '0'
+    const idx = options.findIndex(o => o.type === meal.assignedTo?.type && o.id === meal.assignedTo?.id)
+    return idx >= 0 ? String(idx) : '0'
+  }
+
+  const [dish,        setDish]        = useState(meal?.dish ?? '')
+  const [respIdx,     setRespIdx]     = useState(initIndex)
   const [ingredients, setIngredients] = useState(meal?.ingredients ?? [])
   const [ingrInput,   setIngrInput]   = useState('')
 
   function handleSave() {
     if (!dish.trim()) return
-    const label = respType === 'everyone' ? 'Everyone' : respLabel.trim() || respType
+    const opt = options[parseInt(respIdx, 10)] ?? options[0]
     onSave({
       dish: dish.trim(),
-      assignedTo: { type: respType, id: null, label },
+      assignedTo: { type: opt.type, id: opt.id, label: opt.label },
       ...(mode === 'edit' && { ingredients }),
     })
   }
@@ -70,25 +82,15 @@ export default function MealEditForm({ mode, meal, day, slot, onSave, onDelete, 
         Responsible
       </div>
       <select
-        data-testid="form-resp-type"
-        value={respType}
-        onChange={e => setRespType(e.target.value)}
-        style={{ ...inputStyle }}
+        data-testid="form-responsible"
+        value={respIdx}
+        onChange={e => setRespIdx(e.target.value)}
+        style={inputStyle}
       >
-        <option value="everyone">👥 Everyone</option>
-        <option value="family">🍳 Family</option>
-        <option value="person">👤 Individual</option>
+        {options.map((opt, i) => (
+          <option key={`${opt.type}-${opt.id ?? 'everyone'}`} value={String(i)}>{opt.text}</option>
+        ))}
       </select>
-
-      {respType !== 'everyone' && (
-        <input
-          data-testid="form-resp-label"
-          value={respLabel}
-          onChange={e => setRespLabel(e.target.value)}
-          placeholder={respType === 'family' ? 'Family name…' : 'Person name…'}
-          style={inputStyle}
-        />
-      )}
 
       {mode === 'edit' && (
         <>
@@ -134,20 +136,16 @@ export default function MealEditForm({ mode, meal, day, slot, onSave, onDelete, 
           onClick={handleSave}
           style={{
             background: '#4285F4', border: 'none', borderRadius: 6,
-            color: '#fff', fontSize: 11, fontWeight: 600,
-            padding: '5px 12px', cursor: 'pointer',
+            color: '#fff', fontSize: 11, fontWeight: 600, padding: '5px 12px', cursor: 'pointer',
           }}
-        >
-          {mode === 'add' ? 'Add meal' : 'Save'}
-        </button>
+        >{mode === 'add' ? 'Add meal' : 'Save'}</button>
         {mode === 'edit' && (
           <button
             data-testid="form-delete"
             onClick={() => onDelete(meal.mealId)}
             style={{
               background: 'rgba(234,67,53,0.15)', border: '1px solid rgba(234,67,53,0.3)',
-              borderRadius: 6, color: '#f28b82', fontSize: 11,
-              padding: '5px 10px', cursor: 'pointer',
+              borderRadius: 6, color: '#f28b82', fontSize: 11, padding: '5px 10px', cursor: 'pointer',
             }}
           >Delete</button>
         )}
