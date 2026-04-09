@@ -22,16 +22,24 @@ export function subscribeMeals(tripId, callback) {
   })
 }
 
-export async function addMeal(tripId, { dish, slot, day, assignedTo }) {
+export async function addMeal(tripId, { dish, slot, day, assignedTo, createdBy }) {
   return addDoc(collection(db, 'trips', tripId, 'meals'), {
-    dish,
-    slot,
-    day,
-    assignedTo,
+    dish, slot, day, assignedTo,
     ingredients: [],
     order: Date.now(),
+    createdBy: createdBy ?? null,
+    lockedAt: null, lockedBy: null, lockedByName: null,
     createdAt: serverTimestamp(),
   })
+}
+
+export async function toggleMealLock(tripId, mealId, isLocked, uid, displayName) {
+  const ref = doc(db, 'trips', tripId, 'meals', mealId)
+  if (isLocked) {
+    await updateDoc(ref, { lockedAt: null, lockedBy: null, lockedByName: null })
+  } else {
+    await updateDoc(ref, { lockedAt: serverTimestamp(), lockedBy: uid, lockedByName: displayName })
+  }
 }
 
 export async function updateMeal(tripId, mealId, changes) {
@@ -47,12 +55,7 @@ export async function addIngredient(tripId, mealId, name, mealLabel) {
     ingredients: arrayUnion(name),
   })
   await addDoc(collection(db, 'trips', tripId, 'shoppingItems'), {
-    name,
-    mealId,
-    mealLabel,
-    checkedBy: null,
-    checkedAt: null,
-    createdAt: serverTimestamp(),
+    name, mealId, mealLabel, checkedBy: null, checkedAt: null, createdAt: serverTimestamp(),
   })
 }
 
@@ -66,7 +69,5 @@ export async function removeIngredient(tripId, mealId, name) {
     where('name', '==', name)
   )
   const snap = await getDocs(q)
-  for (const d of snap.docs) {
-    await deleteDoc(d.ref)
-  }
+  for (const d of snap.docs) await deleteDoc(d.ref)
 }

@@ -16,8 +16,18 @@ export function subscribeActivities(tripId, callback) {
 export async function addActivity(tripId, data) {
   return addDoc(collection(db, 'trips', tripId, 'activities'), {
     ...data,
+    lockedAt: null, lockedBy: null, lockedByName: null,
     createdAt: serverTimestamp(),
   })
+}
+
+export async function toggleActivityLock(tripId, activityId, isLocked, uid, displayName) {
+  const ref = doc(db, 'trips', tripId, 'activities', activityId)
+  if (isLocked) {
+    await updateDoc(ref, { lockedAt: null, lockedBy: null, lockedByName: null })
+  } else {
+    await updateDoc(ref, { lockedAt: serverTimestamp(), lockedBy: uid, lockedByName: displayName })
+  }
 }
 
 export async function updateActivity(tripId, activityId, changes) {

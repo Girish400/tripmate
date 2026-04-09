@@ -3,7 +3,7 @@ import { addDoc, updateDoc, deleteDoc, onSnapshot, collection, doc } from 'fireb
 import { computeBalances } from '../../src/utils/expenses'
 import {
   subscribeExpenses, addExpense, updateExpense, deleteExpense,
-  subscribeExpenseLabels, addExpenseLabel,
+  subscribeExpenseLabels, addExpenseLabel, toggleExpenseLock,
 } from '../../src/utils/expenses'
 
 const famA = { familyId: 'fA', name: 'Sharma family' }
@@ -119,6 +119,39 @@ describe('expenses Firestore utils', () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ name: 'Food', createdBy: 'u1', createdAt: expect.anything() })
+    )
+  })
+})
+
+describe('toggleExpenseLock', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('locks an expense: writes lockedAt, lockedBy, lockedByName', async () => {
+    await toggleExpenseLock('trip1', 'exp1', false, 'u1', 'Girish')
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ lockedBy: 'u1', lockedByName: 'Girish' })
+    )
+  })
+
+  it('unlocks an expense: writes null fields', async () => {
+    await toggleExpenseLock('trip1', 'exp1', true, 'u1', 'Girish')
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { lockedAt: null, lockedBy: null, lockedByName: null }
+    )
+  })
+})
+
+describe('addExpense with lock fields', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('initialises lockedAt, lockedBy, lockedByName to null', async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: 'exp1' })
+    await addExpense('trip1', { description: 'Test', amount: 10, paidByFamilyId: 'fA', paidByFamilyName: 'Sharma', createdBy: 'u1' })
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ lockedAt: null, lockedBy: null, lockedByName: null })
     )
   })
 })

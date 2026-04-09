@@ -16,8 +16,18 @@ export function subscribeExpenses(tripId, callback) {
 export async function addExpense(tripId, data) {
   return addDoc(collection(db, 'trips', tripId, 'expenses'), {
     ...data,
+    lockedAt: null, lockedBy: null, lockedByName: null,
     createdAt: serverTimestamp(),
   })
+}
+
+export async function toggleExpenseLock(tripId, expenseId, isLocked, uid, displayName) {
+  const ref = doc(db, 'trips', tripId, 'expenses', expenseId)
+  if (isLocked) {
+    await updateDoc(ref, { lockedAt: null, lockedBy: null, lockedByName: null })
+  } else {
+    await updateDoc(ref, { lockedAt: serverTimestamp(), lockedBy: uid, lockedByName: displayName })
+  }
 }
 
 export async function updateExpense(tripId, expenseId, changes) {
@@ -39,9 +49,7 @@ export function subscribeExpenseLabels(tripId, callback) {
 
 export async function addExpenseLabel(tripId, name, uid) {
   return addDoc(collection(db, 'trips', tripId, 'expenseLabels'), {
-    name,
-    createdBy: uid,
-    createdAt: serverTimestamp(),
+    name, createdBy: uid, createdAt: serverTimestamp(),
   })
 }
 
@@ -51,16 +59,8 @@ export function computeBalances(expenses, families) {
   const balanceMap = Object.fromEntries(families.map(f => [f.familyId, 0]))
   for (const expense of expenses) {
     const share = expense.amount / numFamilies
-    if (expense.paidByFamilyId in balanceMap) {
-      balanceMap[expense.paidByFamilyId] += expense.amount
-    }
-    for (const f of families) {
-      balanceMap[f.familyId] -= share
-    }
+    if (expense.paidByFamilyId in balanceMap) balanceMap[expense.paidByFamilyId] += expense.amount
+    for (const f of families) balanceMap[f.familyId] -= share
   }
-  return families.map(f => ({
-    familyId: f.familyId,
-    name: f.name,
-    balance: balanceMap[f.familyId],
-  }))
+  return families.map(f => ({ familyId: f.familyId, name: f.name, balance: balanceMap[f.familyId] }))
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { addDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import {
-  subscribeActivities, addActivity, updateActivity, deleteActivity,
+  subscribeActivities, addActivity, updateActivity, deleteActivity, toggleActivityLock,
 } from '../../src/utils/itinerary'
 
 const TRIP_ID = 'trip1'
@@ -76,5 +76,38 @@ describe('itinerary Firestore utils', () => {
     await deleteActivity(TRIP_ID, 'act1')
     const callArg = deleteDoc.mock.calls[0][0]
     expect(callArg.path).toMatch(/trips\/trip1\/activities\/act1/)
+  })
+})
+
+describe('toggleActivityLock', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('locks an activity: writes lockedAt, lockedBy, lockedByName', async () => {
+    await toggleActivityLock('trip1', 'act1', false, 'u1', 'Girish')
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ lockedBy: 'u1', lockedByName: 'Girish' })
+    )
+  })
+
+  it('unlocks an activity: writes null fields', async () => {
+    await toggleActivityLock('trip1', 'act1', true, 'u1', 'Girish')
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      { lockedAt: null, lockedBy: null, lockedByName: null }
+    )
+  })
+})
+
+describe('addActivity with lock fields', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('initialises lockedAt, lockedBy, lockedByName to null', async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: 'act1' })
+    await addActivity('trip1', { title: 'Hike', time: '09:00', date: '2026-04-05', icon: '🥾', createdBy: 'u1' })
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ lockedAt: null, lockedBy: null, lockedByName: null })
+    )
   })
 })
