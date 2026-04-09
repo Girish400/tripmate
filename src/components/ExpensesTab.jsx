@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
   subscribeExpenses, addExpense, updateExpense, deleteExpense,
-  subscribeExpenseLabels, addExpenseLabel, computeBalances,
+  subscribeExpenseLabels, addExpenseLabel, computeBalances, toggleExpenseLock,
 } from '../utils/expenses'
-import { getTripFamilies } from '../utils/firestore'
+import { getTripFamilies, getTripMembers } from '../utils/firestore'
 import BalanceSummary from './BalanceSummary'
 import ExpenseList from './ExpenseList'
 import ExpenseEditForm from './ExpenseEditForm'
@@ -12,6 +12,8 @@ export default function ExpensesTab({ trip, user }) {
   const [expenses,       setExpenses]       = useState([])
   const [labels,         setLabels]         = useState([])
   const [families,       setFamilies]       = useState([])
+  const [userFamilyId,   setUserFamilyId]   = useState('')
+  const [userFamilyName, setUserFamilyName] = useState('')
   const [loading,        setLoading]        = useState(true)
   const [editingExpense, setEditingExpense] = useState(null)
 
@@ -21,7 +23,18 @@ export default function ExpensesTab({ trip, user }) {
       setLoading(false)
     })
     const unsub2 = subscribeExpenseLabels(trip.tripId, setLabels)
-    getTripFamilies(trip.tripId).then(setFamilies).catch(() => {})
+    Promise.all([
+      getTripFamilies(trip.tripId),
+      getTripMembers(trip.tripId),
+    ]).then(([fams, members]) => {
+      setFamilies(fams)
+      const myMember = members.find(m => m.uid === user.uid)
+      const myFamily = fams.find(f => f.familyId === myMember?.familyId)
+      if (myFamily) {
+        setUserFamilyId(myFamily.familyId)
+        setUserFamilyName(myFamily.name)
+      }
+    }).catch(() => {})
     return () => { unsub1(); unsub2() }
   }, [trip.tripId])
 
@@ -35,7 +48,6 @@ export default function ExpensesTab({ trip, user }) {
       setEditingExpense(null)
     } catch (err) {
       console.error('Failed to save expense:', err)
-      // keep form open so user can retry
     }
   }
 
@@ -45,6 +57,10 @@ export default function ExpensesTab({ trip, user }) {
     } finally {
       setEditingExpense(null)
     }
+  }
+
+  async function handleToggleExpenseLock(expense, isLocked) {
+    await toggleExpenseLock(trip.tripId, expense.expenseId, isLocked, user.uid, user.displayName)
   }
 
   async function handleAddLabel(name) {
@@ -86,6 +102,7 @@ export default function ExpensesTab({ trip, user }) {
         currency={currency}
         onEdit={exp => setEditingExpense(exp)}
         onDelete={handleDelete}
+        onToggleLock={handleToggleExpenseLock}
       />
 
       {editingExpense !== null && (
@@ -100,7 +117,8 @@ export default function ExpensesTab({ trip, user }) {
           <div onClick={e => e.stopPropagation()}>
             <ExpenseEditForm
               expense={editingExpense?.expenseId ? editingExpense : null}
-              families={families}
+              userFamilyId={userFamilyId}
+              userFamilyName={userFamilyName}
               labels={labels}
               user={user}
               onSave={handleSave}

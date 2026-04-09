@@ -2,10 +2,6 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import ExpenseEditForm from '../../src/components/ExpenseEditForm'
 
-const families = [
-  { familyId: 'fA', name: 'Sharma family' },
-  { familyId: 'fB', name: 'Johnson family' },
-]
 const labels = [
   { labelId: 'l1', name: 'Food' },
   { labelId: 'l2', name: 'Transport' },
@@ -14,7 +10,8 @@ const user = { uid: 'u1' }
 
 const defaultProps = {
   expense: null,
-  families,
+  userFamilyId: 'fA',
+  userFamilyName: 'Sharma family',
   labels,
   user,
   onSave: vi.fn(),
@@ -34,26 +31,41 @@ describe('ExpenseEditForm', () => {
     expect(screen.getByTestId('form-save').textContent).toBe('Add expense')
   })
 
+  it('shows the auto-set family name as read-only paid-by text', () => {
+    render(<ExpenseEditForm {...defaultProps} />)
+    expect(screen.getByTestId('paid-by-display')).toBeTruthy()
+    expect(screen.getByText('Sharma family')).toBeTruthy()
+  })
+
+  it('does NOT render a paid-by select dropdown', () => {
+    render(<ExpenseEditForm {...defaultProps} />)
+    expect(screen.queryByTestId('form-paid-by')).toBeNull()
+  })
+
   it('shows Save and Delete buttons in edit mode', () => {
-    const expense = { expenseId: 'e1', description: 'Groceries', amount: 50, paidByFamilyId: 'fA', label: 'Food', createdBy: 'u1' }
+    const expense = { expenseId: 'e1', description: 'Groceries', amount: 50, paidByFamilyId: 'fA', paidByFamilyName: 'Sharma family', label: 'Food', createdBy: 'u1' }
     render(<ExpenseEditForm {...defaultProps} expense={expense} />)
     expect(screen.getByTestId('form-save').textContent).toBe('Save')
     expect(screen.getByTestId('form-delete')).toBeTruthy()
   })
 
-  it('pre-fills fields in edit mode', () => {
-    const expense = { expenseId: 'e1', description: 'Groceries', amount: 124.5, paidByFamilyId: 'fA', label: 'Food', createdBy: 'u1' }
+  it('pre-fills description and amount in edit mode', () => {
+    const expense = { expenseId: 'e1', description: 'Groceries', amount: 124.5, paidByFamilyId: 'fA', paidByFamilyName: 'Sharma family', label: 'Food', createdBy: 'u1' }
     render(<ExpenseEditForm {...defaultProps} expense={expense} />)
     expect(screen.getByTestId('form-description').value).toBe('Groceries')
     expect(screen.getByTestId('form-amount').value).toBe('124.5')
-    expect(screen.getByTestId('form-paid-by').value).toBe('fA')
+  })
+
+  it('shows original paidByFamilyName in edit mode', () => {
+    const expense = { expenseId: 'e1', description: 'Groceries', amount: 50, paidByFamilyId: 'fB', paidByFamilyName: 'Johnson family', label: null, createdBy: 'u2' }
+    render(<ExpenseEditForm {...defaultProps} expense={expense} />)
+    expect(screen.getByTestId('paid-by-display').textContent).toContain('Johnson family')
   })
 
   it('does not call onSave when description is empty', async () => {
     const onSave = vi.fn()
     render(<ExpenseEditForm {...defaultProps} onSave={onSave} />)
     fireEvent.change(screen.getByTestId('form-amount'), { target: { value: '50' } })
-    fireEvent.change(screen.getByTestId('form-paid-by'), { target: { value: 'fA' } })
     await act(async () => { fireEvent.click(screen.getByTestId('form-save')) })
     expect(onSave).not.toHaveBeenCalled()
   })
@@ -63,18 +75,16 @@ describe('ExpenseEditForm', () => {
     render(<ExpenseEditForm {...defaultProps} onSave={onSave} />)
     fireEvent.change(screen.getByTestId('form-description'), { target: { value: 'Test' } })
     fireEvent.change(screen.getByTestId('form-amount'), { target: { value: '-10' } })
-    fireEvent.change(screen.getByTestId('form-paid-by'), { target: { value: 'fA' } })
     await act(async () => { fireEvent.click(screen.getByTestId('form-save')) })
     expect(onSave).not.toHaveBeenCalled()
   })
 
-  it('calls onSave with correct data when form is valid', async () => {
+  it('calls onSave with auto-set paidByFamilyId and paidByFamilyName in add mode', async () => {
     const onSave = vi.fn().mockResolvedValue()
     const onClose = vi.fn()
     render(<ExpenseEditForm {...defaultProps} onSave={onSave} onClose={onClose} />)
     fireEvent.change(screen.getByTestId('form-description'), { target: { value: 'Groceries' } })
-    fireEvent.change(screen.getByTestId('form-amount'),      { target: { value: '120' } })
-    fireEvent.change(screen.getByTestId('form-paid-by'),     { target: { value: 'fA' } })
+    fireEvent.change(screen.getByTestId('form-amount'), { target: { value: '120' } })
     await act(async () => { fireEvent.click(screen.getByTestId('form-save')) })
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       description: 'Groceries',
@@ -87,19 +97,19 @@ describe('ExpenseEditForm', () => {
 
   it('calls onDelete with expenseId when delete is clicked', async () => {
     const onDelete = vi.fn()
-    const expense = { expenseId: 'e1', description: 'Groceries', amount: 50, paidByFamilyId: 'fA', label: null, createdBy: 'u1' }
+    const expense = { expenseId: 'e1', description: 'Groceries', amount: 50, paidByFamilyId: 'fA', paidByFamilyName: 'Sharma family', label: null, createdBy: 'u1' }
     render(<ExpenseEditForm {...defaultProps} expense={expense} onDelete={onDelete} />)
     await act(async () => { fireEvent.click(screen.getByTestId('form-delete')) })
     expect(onDelete).toHaveBeenCalledWith('e1')
   })
 
-  it('shows new label input when "Create new label" is selected', () => {
+  it('shows new label input when Create new label is selected', () => {
     render(<ExpenseEditForm {...defaultProps} />)
     fireEvent.change(screen.getByTestId('form-label'), { target: { value: '__create__' } })
     expect(screen.getByTestId('new-label-input')).toBeTruthy()
   })
 
-  it('calls onAddLabel and selects the label when "Add" is clicked', async () => {
+  it('calls onAddLabel when new label is added', async () => {
     const onAddLabel = vi.fn().mockResolvedValue()
     render(<ExpenseEditForm {...defaultProps} onAddLabel={onAddLabel} />)
     fireEvent.change(screen.getByTestId('form-label'), { target: { value: '__create__' } })

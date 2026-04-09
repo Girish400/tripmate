@@ -38,6 +38,7 @@ describe('ExpensesTab integration', () => {
       return vi.fn()
     })
     vi.spyOn(firestoreUtils, 'getTripFamilies').mockResolvedValue([])
+    vi.spyOn(firestoreUtils, 'getTripMembers').mockResolvedValue([])
     vi.spyOn(expensesUtils, 'addExpense').mockResolvedValue({ id: 'new-exp' })
     vi.spyOn(expensesUtils, 'updateExpense').mockResolvedValue()
     vi.spyOn(expensesUtils, 'deleteExpense').mockResolvedValue()
@@ -84,12 +85,12 @@ describe('ExpensesTab integration', () => {
 
   it('submitting add form calls addExpense with correct args', async () => {
     vi.spyOn(firestoreUtils, 'getTripFamilies').mockResolvedValue(mockFamilies)
+    vi.spyOn(firestoreUtils, 'getTripMembers').mockResolvedValue([{ uid: 'u1', familyId: 'fA' }])
     render(<ExpensesTab trip={mockTrip} user={mockUser} />)
     await act(async () => {})
     fireEvent.click(screen.getByTestId('add-expense-btn'))
     fireEvent.change(screen.getByTestId('form-description'), { target: { value: 'Gas' } })
     fireEvent.change(screen.getByTestId('form-amount'),      { target: { value: '60' } })
-    fireEvent.change(screen.getByTestId('form-paid-by'),     { target: { value: 'fA' } })
     await act(async () => { fireEvent.click(screen.getByTestId('form-save')) })
     expect(expensesUtils.addExpense).toHaveBeenCalledWith('trip1', expect.objectContaining({
       description: 'Gas',
